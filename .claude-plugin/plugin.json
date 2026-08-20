@@ -1,7 +1,7 @@
 {
   "name": "max-base-skills",
-  "version": "1.0.0",
-  "description": "Five lean workflow skills for Claude Code: clarify, plan, test, review, debug.",
+  "version": "1.1.0",
+  "description": "Reusable engineering toolkit: rules (how to engineer) + skills (clarify, plan, test, review, debug).",
   "author": {
     "name": "easylager"
   }
