@@ -1,0 +1,40 @@
+---
+name: debug
+description: Investigate a bug, failing test, error, or unexpected behavior by finding the root cause before proposing a fix.
+---
+
+# Debug
+
+Investigate the current problem systematically.
+
+## Rules
+
+- Reproduce the problem when possible.
+- Inspect relevant code, tests, logs, and recent changes.
+- Form hypotheses based on evidence.
+- Prefer root-cause analysis over symptom fixing.
+- Do not modify files until the root cause is reasonably understood.
+- Avoid speculative fixes.
+- Consider related edge cases and regression risks.
+- Keep the investigation proportional to the problem.
+
+## Output
+
+Keep the investigation concise.
+
+### Symptom
+What is failing.
+
+### Evidence
+The relevant observations.
+
+### Root cause
+The most likely cause, with confidence.
+
+### Fix
+The minimal appropriate fix.
+
+### Regression risk
+What else could be affected.
+
+If reproduction or evidence is insufficient, clearly state what is missing.

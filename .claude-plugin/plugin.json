@@ -1,0 +1,7 @@
+{
+  "name": "max-base-skills",
+  "description": "Five lean workflow skills for Claude Code: clarify, plan, test, review, debug.",
+  "author": {
+    "name": "easylager"
+  }
+}
