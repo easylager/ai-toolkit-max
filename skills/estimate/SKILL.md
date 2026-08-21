@@ -12,7 +12,7 @@ Two modes, chosen from the input:
 
 ## Rules
 
-- Do not modify files.
+- Do not modify files, except appending the post-work Record into `.ai/state.md`'s Estimation section when `.ai/` is in use — see `rules/core/execution-state.md`.
 - Do not write implementation code.
 - Prefer ranges over single numbers. Avoid false precision.
 - Decompose only when the task genuinely has multiple parts of different complexity.
@@ -44,4 +44,4 @@ Variance: <direction/magnitude>
 Driver: <what caused the difference, one line>
 ```
 
-Keep this structured and terse — it's meant to be reusable as historical estimation data later, not prose.
+Keep this structured and terse — it's meant to be reusable as historical estimation data later, not prose. When `.ai/state.md` exists, also update its Estimation section with this record.

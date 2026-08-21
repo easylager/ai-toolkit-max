@@ -11,7 +11,7 @@ Create an implementation plan for the current task.
 
 - Analyze the existing repository before proposing changes.
 - Reuse existing patterns and abstractions when appropriate.
-- Do not modify files.
+- Do not modify files, except `.ai/plan.md` when persisting a multi-slice plan — see `rules/core/execution-state.md`.
 - Do not write implementation code.
 - Avoid unnecessary architecture and dependencies.
 - Prefer the smallest design that satisfies the requirements.
