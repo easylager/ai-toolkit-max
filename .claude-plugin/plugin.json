@@ -1,7 +1,7 @@
 {
-  "name": "max-base-skills",
-  "version": "1.1.0",
-  "description": "Reusable engineering toolkit: rules (how to engineer) + skills (clarify, plan, test, review, debug).",
+  "name": "ai-toolkit-max",
+  "version": "2.0.0",
+  "description": "Reusable engineering toolkit: rules (how to engineer) + skills (clarify, plan, impact, estimate, test, review, debug, challenge, short).",
   "author": {
     "name": "easylager"
   }

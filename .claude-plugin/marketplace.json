@@ -1,15 +1,15 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "max-base-skills",
-  "description": "Reusable engineering toolkit: rules (how to engineer) + skills (clarify, plan, test, review, debug).",
+  "name": "ai-toolkit-max",
+  "description": "Reusable engineering toolkit: rules (how to engineer) + skills (clarify, plan, impact, estimate, test, review, debug, challenge, short).",
   "owner": {
     "name": "easylager"
   },
   "plugins": [
     {
-      "name": "max-base-skills",
+      "name": "ai-toolkit-max",
       "source": "./",
-      "description": "Five lean workflow skills plus core/backend/frontend engineering rules."
+      "description": "Nine lean workflow skills plus core/backend/frontend engineering rules."
     }
   ]
 }
