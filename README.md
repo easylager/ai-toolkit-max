@@ -20,7 +20,7 @@ A reusable engineering toolkit for Claude Code, split into two layers:
 - **Rules** answer *how I should engineer* — always-on principles you pull into a project's `CLAUDE.md`.
 - **Skills** answer *what process should I run now* — on-demand workflows you invoke with `/clarify`, `/plan`, etc.
 
-Process depth is meant to scale with the task. `classify` is the entry point: it looks at the task and recommends the minimum chain needed — a trivial change is just `implement → verify`; a risky or ambiguous one pulls in `estimate → clarify → plan → impact/challenge → next → implement → verify → review`. See `rules/core/engineering.md`. There's no skill for "implement" — writing the code is Claude's normal behavior, not a separate mode.
+Process depth is meant to scale with the task. `classify` is the entry point: it looks at the task and recommends the minimum chain needed — a trivial change is just `implement → verify`; a risky or ambiguous one pulls in `clarify → plan → estimate → impact/challenge → next → implement → verify → review`. See `rules/core/engineering.md`. There's no skill for "implement" — writing the code is Claude's normal behavior, not a separate mode.
 
 ## Installation
 
@@ -64,7 +64,7 @@ Both are idempotent — safe to re-run any time. Two more modes, documented belo
 
 ## Skills
 
-Twelve skills, each a distinct mode of work rather than a fixed pipeline stage. None of them are mandatory gates — invoke only what the task warrants.
+Thirteen skills, each a distinct mode of work rather than a fixed pipeline stage. None of them are mandatory gates — invoke only what the task warrants.
 
 **ENTRY** — decide how much process the task deserves.
 
@@ -79,15 +79,16 @@ Twelve skills, each a distinct mode of work rather than a fixed pipeline stage. 
 | `/clarify` | Before implementing anything ambiguous. Surfaces only high-impact ambiguities, edge cases, acceptance criteria, and open questions. |
 | `/plan` | Once requirements are clear. Produces a concise implementation plan (approach, changes, data/API, tests, risks). |
 | `/impact` | The change touches shared code, public interfaces, migrations, or infrastructure. Affected surfaces, breaking changes, rollout risk — deeper than `plan`'s Risks line. Skip for isolated/local changes. |
-| `/estimate` | Before work: a range estimate with assumptions and uncertainty exposed. After work: actual vs. estimate, recorded in a structured format for future calibration. |
+| `/estimate` | Once a plan is approved. Decomposes it into the minimum reasonable number of executable slices (goal, scope, dependencies, verification criteria, range estimate each), and initializes the task's state. After work: actual vs. estimate, recorded in a structured format for future calibration. |
 | `/challenge` | A plan or decision carries real weight and has no second reviewer. Stress-tests the reasoning — weakest assumptions, simpler alternative, verdict. Not a repeat of `plan`'s risks. |
 
 **EXECUTE** — manage incremental implementation against a plan.
 
 | Skill | Use it when |
 |---|---|
-| `/next` | Deciding what to safely build next. Reads `.ai/` + the repo and reports Ready (a vertical slice, not the next plan item), Blocked, Plan invalidated, or Complete. |
-| `/verify` | The current slice needs objective proof before moving on — tests, lint, types, build. Reports PASS/FAIL/UNKNOWN per check; never claims success without evidence. |
+| `/next` | Deciding what to safely do next for a task (`/next` or `/next TASK-NNN`). The execution dispatcher: reads that task's plan, slice map, and state, and reports one canonical state — `READY`, `VERIFYING`, `BLOCKED`, `RECOVERABLE`, `REPLAN_REQUIRED`, or `COMPLETE` — routing automatically through verification/debug rather than making you orchestrate every step. |
+| `/verify` | The current slice needs objective proof before moving on — tests, lint, types, build, checked against the slice's stated verification criteria. Reports PASS/FAIL/UNKNOWN per check; never claims success without evidence. |
+| `/status` | Checking where things stand (`/status` or `/status TASK-NNN`) without changing anything. Reports one task's state or a compact list of all active tasks, straight from `.ai/state.md`. |
 
 **QUALITY** — validate the result.
 
@@ -117,20 +118,61 @@ To remove it: `claude plugin uninstall ai-toolkit-max` and `claude plugin market
 
 ## Execution state
 
-For tasks big enough to need multi-slice tracking across sessions, `/next` and `/verify` read and write `.ai/` at the root of the project you're working in (not this toolkit repo):
+For tasks big enough to need multi-slice tracking across sessions, a task gets a stable id (`TASK-001`, `TASK-002`, …) and persistent state in `.ai/` at the root of the project you're working in (not this toolkit repo):
 
 ```
 .ai/
-├── plan.md        # the destination — plan + intended slices, written by /plan
-├── state.md        # the current position — in progress/complete/verified/failing/next
-└── decisions.md     # meaningful decisions worth not rediscovering, append-only
+├── plan.md        # the destination — plan + slice map, written by /plan, sliced by /estimate
+├── state.md        # the current position of every task — one block per id, owned by /next + /verify
+└── decisions.md     # meaningful decisions worth not rediscovering, append-only, tagged by task id
 ```
 
-Created lazily — a task that doesn't need it never gets a `.ai/` folder. Full contract in `rules/core/execution-state.md`, in short:
+```
+TASK ──▶ classify ──▶ plan + estimate ──▶ state ──▶ next ──▶ slice ──▶ verify ──▶ state ──▶ next ──▶ …
+```
 
-- State is advisory; the repo (git diff, test output) is always ground truth.
+Created lazily — a task that doesn't need it never gets a `.ai/` folder or a `TASK-NNN` id. Full contract in `rules/core/execution-state.md`, in short:
+
+- `.ai/state.md` is the single source of truth for a task's position: state (`READY`/`EXECUTING`/`VERIFYING`/`BLOCKED`/`RECOVERABLE`/`REPLAN_REQUIRED`/`COMPLETE`), current slice, last action, next action, blockers. State is advisory; the repo (git diff, test output) is always ground truth.
 - Only `/next`, `/verify`, `/plan`, and `/estimate` write inside `.ai/`, and nowhere else — never source code, configs, or other project files.
 - Commit `.ai/` to the project's own repo by default, so a new session or a teammate can resume without replaying the conversation.
+
+Work through it mostly with `/next` and `go`:
+
+```
+/next
+  Task: TASK-003 — Migrate tenant authorization
+  State: READY
+  Slice: 3/5 — application authorization
+  Verification: role checks enforced on all tenant routes; auth tests pass
+  Ready to execute.
+
+go
+  ⋮ (implemented, then verified automatically)
+
+/next
+  Task: TASK-003 — Migrate tenant authorization
+  State: RECOVERABLE
+  One failing test, local to this slice.
+  Next: /debug → /verify
+```
+
+`/status` answers "where are things" without touching anything:
+
+```
+/status
+  TASK-001  COMPLETE
+  TASK-002  EXECUTING  slice 2/4
+  TASK-003  RECOVERABLE  slice 3/5
+
+/status TASK-003
+  TASK-003 — Migrate tenant authorization
+  State: RECOVERABLE
+  Current slice: 3/5
+  Last action: application authorization implemented
+  Next: /debug → /verify
+  Blocked: no
+```
 
 ## Rules
 
@@ -221,6 +263,7 @@ skills/
   challenge/SKILL.md
   next/SKILL.md
   verify/SKILL.md
+  status/SKILL.md
   test/SKILL.md
   review/SKILL.md
   debug/SKILL.md

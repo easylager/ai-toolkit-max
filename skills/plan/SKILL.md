@@ -11,7 +11,7 @@ Create an implementation plan for the current task.
 
 - Analyze the existing repository before proposing changes.
 - Reuse existing patterns and abstractions when appropriate.
-- Do not modify files, except `.ai/plan.md` when persisting a multi-slice plan — see `rules/core/execution-state.md`.
+- Do not modify files, except `.ai/plan.md` when persisting a multi-slice plan. The first time a task's plan is persisted, assign it the next sequential `TASK-NNN` id and record it at the top of `.ai/plan.md`; reuse the existing id when refining an already-persisted plan. See `rules/core/execution-state.md`.
 - Do not write implementation code.
 - Avoid unnecessary architecture and dependencies.
 - Prefer the smallest design that satisfies the requirements.
@@ -41,6 +41,6 @@ Only mention meaningful risks or unresolved decisions.
 
 End with:
 
-**Ready to implement**
+**Ready to implement** (plus `Task: TASK-NNN` when `.ai/` is in use)
 
 or list what still needs clarification.

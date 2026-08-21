@@ -11,6 +11,7 @@ Establish ground truth for the current slice. Objective evidence only.
 
 - Do not modify files except `.ai/state.md`. See `rules/core/execution-state.md`.
 - Do not write implementation code — fixing failures is `/debug`'s job, not this skill's.
+- Check against the current slice's stated verification criteria (from the slice map or `/next`'s READY report) — not just whatever tests happen to run.
 - Run whatever the repo actually has: tests, lint, type checking, build, or other relevant commands. Don't assume tooling that isn't there.
 - Every result is PASS, FAIL, or UNKNOWN. Never claim something works without having run it. Mark UNKNOWN rather than guessing when a check isn't feasible.
 - Scope evidence to the current slice's actual diff — don't attribute unrelated changes to it, and flag unrelated changes if present.

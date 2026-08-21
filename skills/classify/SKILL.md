@@ -15,7 +15,7 @@ Assess the task and recommend the minimum workflow depth needed to handle it saf
 - Use qualitative levels (Trivial/Low/Medium/High), not scores or narrative.
 - Base the assessment on the task description and repository context — do not assume business intent that isn't stated.
 - Match process depth to task complexity: recommend the minimum defensible workflow, not the maximum available. A trivial task should recommend just `implement → verify`.
-- Reference only existing skill names in the recommended chain (`clarify`, `plan`, `impact`, `estimate`, `challenge`, `next`, `verify`, `test`, `review`, `debug`, `short`) — never invent a new one. `implement` may also appear in the chain, but it is not a toolkit skill: it denotes Claude's native code-writing behavior and has no SKILL.md.
+- Reference only existing skill names in the recommended chain (`clarify`, `plan`, `impact`, `estimate`, `challenge`, `next`, `verify`, `status`, `test`, `review`, `debug`, `short`) — never invent a new one. `implement` may also appear in the chain, but it is not a toolkit skill: it denotes Claude's native code-writing behavior and has no SKILL.md.
 - Mention potential capabilities (MCP, filesystem, database, cloud, browser, external APIs) only if the task plausibly needs them. Never install, configure, or assume access to any of them.
 - Keep the output short — this is a routing decision, not an analysis.
 
