@@ -1,7 +1,7 @@
 {
   "name": "ai-toolkit-max",
   "version": "3.0.0",
-  "description": "Reusable engineering toolkit: rules (how to engineer) + skills across THINK (clarify, plan, impact, estimate, challenge), EXECUTE (next, verify), and QUALITY (test, review, debug, short).",
+  "description": "Reusable engineering toolkit: rules (how to engineer) + skills across ENTRY (classify), THINK (clarify, plan, impact, estimate, challenge), EXECUTE (next, verify), and QUALITY (test, review, debug, short).",
   "author": {
     "name": "easylager"
   }
