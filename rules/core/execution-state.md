@@ -21,12 +21,12 @@ Each criterion (`AC-NNN`) has two independent axes, tracked in different files b
 
 There is deliberately no third, separately-tracked "implementation status" per criterion — that's exactly what the slice's own `READY`/`EXECUTING`/`VERIFYING` position already tracks (see Execution loop below). Adding a parallel field would duplicate state that already exists; a criterion's implementation progress is read off the slice(s) that cover it.
 
-A criterion's verification method/level (unit, integration, e2e, contract, performance, security, static analysis, migration, manual, exploratory, or other — chosen by what can actually prove the criterion, not a fixed default) is decided in `/clarify`/`/plan` as a category and refined into concrete checks by `/estimate`/`/verify`.
+A criterion's verification method/level (unit, integration, e2e, contract, performance, security, static analysis, migration, manual, exploratory, or other — chosen by what can actually prove the criterion, not a fixed default) is decided in `/clarify`/`/plan` as a category and refined into concrete checks by `/estimate`/`/verify`. A criterion may also carry an optional capability hint (e.g. Playwright, Sentry) naming the external system that most naturally supplies that evidence — advisory only, per `rules/core/capabilities.md`; `/verify` never blocks on a missing hinted capability while an adequate local alternative exists.
 
 ## Files
 
 ### `.ai/plan.md`
-The destination — what needs to be done. Each task's plan starts with `Task: TASK-NNN — <title>`, followed by its acceptance criteria (`AC-NNN`: description, requirement status, verification method/level — see Acceptance criteria above). Written by `/plan`; extended by `/estimate` with that task's initial slice map (short slice id like `S1`, goal, scope, dependencies, the acceptance criterion/criteria it covers, estimate, verification criteria — see `skills/estimate/SKILL.md`). `/next` may reorder, split, merge, or annotate slices as execution surfaces new information, but doesn't originate the map or rewrite the acceptance criteria — a criterion changing is a `/plan` event (see REPLAN_REQUIRED below).
+The destination — what needs to be done. Each task's plan starts with `Task: TASK-NNN — <title>`, followed by its acceptance criteria (`AC-NNN`: description, requirement status, verification method/level, optional capability hint — see Acceptance criteria above). Written by `/plan`; extended by `/estimate` with that task's initial slice map (short slice id like `S1`, goal, scope, dependencies, the acceptance criterion/criteria it covers, estimate, verification criteria — see `skills/estimate/SKILL.md`). `/next` may reorder, split, merge, or annotate slices as execution surfaces new information, but doesn't originate the map or rewrite the acceptance criteria — a criterion changing is a `/plan` event (see REPLAN_REQUIRED below).
 
 ### `.ai/state.md`
 The current position of every task, one block per task, using `/next`'s canonical states: `READY`, `EXECUTING`, `VERIFYING`, `BLOCKED`, `RECOVERABLE`, `REPLAN_REQUIRED`, or `COMPLETE` (see `skills/next/SKILL.md`), plus each acceptance criterion's verification status. Owned by `/next` and `/verify`, initialized by `/estimate`; overwritten in place per task, not appended. `EXECUTING` is advisory only — a stale `EXECUTING` marker from an interrupted session is re-derived from the repo, never trusted outright.
@@ -55,7 +55,7 @@ Meaningful architectural/implementation decisions the agent shouldn't have to re
 
 ## Execution loop
 
-Per task, once it has a slice map: `/estimate` initializes it (READY) → `/next` picks a slice (READY) → implement it (normal Claude work, not a skill) → `/verify` (VERIFYING) → checkpoint → `/next` again → … → `/next` reports COMPLETE → final `/verify` and `/review`.
+Per task, once it has a slice map: `/estimate` initializes it (READY) → `/next` picks a slice (READY) → implement it (normal Claude work, not a skill — consulting `rules/core/capabilities.md` for relevant external context only if it reduces uncertainty) → `/verify` (VERIFYING) → checkpoint → `/next` again → … → `/next` reports COMPLETE → final `/verify` and `/review`.
 
 State transitions:
 ```

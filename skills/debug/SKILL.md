@@ -11,6 +11,7 @@ Investigate the current problem systematically.
 
 - Reproduce the problem when possible.
 - Inspect relevant code, tests, logs, and recent changes.
+- If runtime/infrastructure evidence would settle the root cause faster (production errors, database state, browser runtime) and the matching MCP is configured, use it per `rules/core/capabilities.md`. Never invent access to one that isn't configured — fall back to local evidence instead.
 - Form hypotheses based on evidence.
 - Prefer root-cause analysis over symptom fixing.
 - Do not modify files until the root cause is reasonably understood.

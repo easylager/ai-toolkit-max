@@ -139,7 +139,7 @@ TASK ──▶ classify ──▶ clarify ──▶ plan+estimate ──▶ stat
 
 Created lazily — a task that doesn't need it never gets a `.ai/` folder or a `TASK-NNN` id. Full contract in `rules/core/execution-state.md`, in short:
 
-- **Acceptance criteria drive everything.** `/clarify` drafts them (`AC-NNN`, classified `CONFIRMED`/`INFERRED`/`UNKNOWN`), `/plan` finalizes and persists them into `.ai/plan.md`, `/estimate` maps each slice to the criteria it covers, and `/verify` is what actually marks a criterion `VERIFIED` — with evidence, never on confidence alone. A task is `COMPLETE` when every criterion is `VERIFIED`, not when the code looks done.
+- **Acceptance criteria drive everything.** `/clarify` drafts them (`AC-NNN`, classified `CONFIRMED`/`INFERRED`/`UNKNOWN`), `/plan` finalizes and persists them into `.ai/plan.md`, `/estimate` maps each slice to the criteria it covers, and `/verify` is what actually marks a criterion `VERIFIED` — with evidence, never on confidence alone. A task is `COMPLETE` when every criterion is `VERIFIED`, not when the code looks done. A criterion may also carry an optional capability hint (see [Capabilities](#capabilities) below) naming the MCP that most naturally supplies its evidence — advisory, never a blocker on its own.
 - `.ai/state.md` is the single source of truth for a task's position: state (`READY`/`EXECUTING`/`VERIFYING`/`BLOCKED`/`RECOVERABLE`/`REPLAN_REQUIRED`/`COMPLETE`), current slice, last action, next action, blockers, and each acceptance criterion's verification status (`VERIFIED`/`FAILED`/`BLOCKED`/`NOT_VERIFIED`) with its evidence. State is advisory; the repo (git diff, test output) is always ground truth.
 - Only `/next`, `/verify`, `/plan`, and `/estimate` write inside `.ai/`, and nowhere else — never source code, configs, or other project files.
 - Commit `.ai/` to the project's own repo by default, so a new session or a teammate can resume without replaying the conversation.
@@ -200,6 +200,7 @@ Markdown principle sets, grouped so you only pull in what's relevant to the proj
 | `rules/core/quality.md` | Correctness, error handling, testing, observability. |
 | `rules/core/security.md` | Secrets, untrusted input, least privilege. |
 | `rules/core/execution-state.md` | The `.ai/` contract — what `plan.md`/`state.md`/`decisions.md` mean, who writes what, and that state is advisory. |
+| `rules/core/capabilities.md` | How to treat MCPs: minimum-capability selection, the registry of which MCP serves which skill, and default permission levels. |
 | `rules/backend/python.md` | Python/FastAPI conventions — typing, async, thin routes, Pydantic. |
 | `rules/frontend/react.md` | React conventions — composition, state, effects, accessibility. |
 
@@ -223,14 +224,21 @@ That creates (or, if one already exists, appends to) the project's `CLAUDE.md` w
 @/absolute/path/to/ai-toolkit-max/rules/core/quality.md
 @/absolute/path/to/ai-toolkit-max/rules/core/security.md
 @/absolute/path/to/ai-toolkit-max/rules/core/execution-state.md
+@/absolute/path/to/ai-toolkit-max/rules/core/capabilities.md
 <!-- ai-toolkit-max:rules:end -->
 ```
 
-The five `core/` rules are always included. `backend/python.md` or `frontend/react.md` are added automatically only when the project looks like it needs them (a `requirements.txt`/`pyproject.toml`/`*.py`, or a `package.json` depending on `react`) — nothing is forced. Content outside the markers is never touched, and re-running is idempotent: it regenerates the block in place rather than duplicating it.
+The six `core/` rules are always included. `backend/python.md` or `frontend/react.md` are added automatically only when the project looks like it needs them (a `requirements.txt`/`pyproject.toml`/`*.py`, or a `package.json` depending on `react`) — nothing is forced. Content outside the markers is never touched, and re-running is idempotent: it regenerates the block in place rather than duplicating it.
 
 Claude Code may show a one-time prompt the first time a session loads a project with these imports, since the paths point outside the project — that's expected, approve it once.
 
 Without running `install.sh --project`, you can still hand-write the same `@` lines yourself, pointing at wherever you cloned this repo.
+
+## Capabilities
+
+Skills decide *what* to do; capabilities decide *what Claude can reach* while doing it. There are two kinds — MCPs (external systems: Linear, GitHub, Figma, Context7, Playwright, Chrome DevTools, Sentry, Postgres) and the local filesystem/CLI. `rules/core/capabilities.md` has the full registry and default permission levels (e.g. Postgres read-only, GitHub minimum scope); `classify`'s "Potential capabilities" and each skill's `Capability:`/MCP hints point at it.
+
+The rule everywhere it's referenced: an MCP is a hint, never a requirement. `clarify`, `plan`, `verify`, and `debug` use one only when it's the minimum capability that supplies evidence the repo can't, never invent access to one that isn't configured, and fall back to the best available local method — naming the gap only when it materially affects confidence. This toolkit never installs, configures, or bundles an MCP server itself (`./install.sh --doctor` confirms none were pulled in); it only documents how to use one if your session already has it.
 
 ## Doctor / health check
 
@@ -291,6 +299,7 @@ rules/
     quality.md
     security.md
     execution-state.md
+    capabilities.md
   backend/
     python.md
   frontend/

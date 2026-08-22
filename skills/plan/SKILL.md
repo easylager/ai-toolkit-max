@@ -11,11 +11,12 @@ Create an implementation plan for the current task, built around its Acceptance 
 
 - Analyze the existing repository before proposing changes.
 - Reuse existing patterns and abstractions when appropriate.
+- Before finalizing Changes, check whether an available external capability would materially reduce implementation uncertainty — design context (Figma), current library documentation (Context7), related PRs/issues (GitHub) — per `rules/core/capabilities.md`. Use it only if it changes what gets built; never invent access to one that isn't configured.
 - Take `/clarify`'s draft acceptance criteria as the starting point when one exists in this conversation; otherwise derive criteria directly from the request using the same CONFIRMED/INFERRED/UNKNOWN classification (see `skills/clarify/SKILL.md`).
 - Only promote an `INFERRED` criterion to `CONFIRMED` if the conversation actually confirmed it — never upgrade a status just because a plan is being written. Carry unresolved `INFERRED`/`UNKNOWN` criteria forward as-is.
 - Every meaningful acceptance criterion must be traceable to at least one entry in Changes or Tests. Flag any criterion with no implementation or verification path instead of silently dropping it.
 - If an `UNKNOWN` criterion would block safe implementation, do not plan around a guessed default — say so and stop short of "Ready to implement" instead.
-- Do not modify files, except `.ai/plan.md` when persisting a multi-slice plan. The first time a task's plan is persisted, assign it the next sequential `TASK-NNN` id and record it at the top of `.ai/plan.md` together with its acceptance criteria (id, description, requirement status, verification method/level); reuse the existing id and update the existing criteria list when refining an already-persisted plan. See `rules/core/execution-state.md`.
+- Do not modify files, except `.ai/plan.md` when persisting a multi-slice plan. The first time a task's plan is persisted, assign it the next sequential `TASK-NNN` id and record it at the top of `.ai/plan.md` together with its acceptance criteria (id, description, requirement status, verification method/level, capability hint if any); reuse the existing id and update the existing criteria list when refining an already-persisted plan. See `rules/core/execution-state.md`.
 - Do not write implementation code.
 - Avoid unnecessary architecture and dependencies.
 - Prefer the smallest design that satisfies the requirements.
@@ -38,6 +39,7 @@ AC-<NNN>
 <one-line, testable description>
 Status: CONFIRMED | INFERRED | UNKNOWN
 Verification: <method/level>
+Capability: <MCP hint per rules/core/capabilities.md — omit if the built-in toolchain is sufficient>
 ```
 Omit this section entirely only if the task is trivial enough that `/clarify`/`/estimate` would also be skipped.
 
