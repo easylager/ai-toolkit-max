@@ -64,7 +64,7 @@ Both are idempotent — safe to re-run any time. Two more modes, documented belo
 
 ## Skills
 
-Thirteen skills, each a distinct mode of work rather than a fixed pipeline stage. None of them are mandatory gates — invoke only what the task warrants.
+Fourteen skills, each a distinct mode of work rather than a fixed pipeline stage. None of them are mandatory gates — invoke only what the task warrants.
 
 **ENTRY** — decide how much process the task deserves.
 
@@ -76,28 +76,34 @@ Thirteen skills, each a distinct mode of work rather than a fixed pipeline stage
 
 | Skill | Use it when |
 |---|---|
-| `/clarify` | Before implementing anything ambiguous. Surfaces only high-impact ambiguities, edge cases, acceptance criteria, and open questions. |
-| `/plan` | Once requirements are clear. Produces a concise implementation plan (approach, changes, data/API, tests, risks). |
+| `/clarify` | Before implementing anything ambiguous. Drafts an Acceptance Contract: candidate acceptance criteria classified CONFIRMED/INFERRED/UNKNOWN, their verification approach, and the questions needed to resolve what's open — the entry point for acceptance criteria in the workflow. |
+| `/plan` | Once requirements are clear. Produces a concise implementation plan anchored to `/clarify`'s acceptance criteria — every meaningful criterion mapped to a change and a test, flagged if it has neither. |
 | `/impact` | The change touches shared code, public interfaces, migrations, or infrastructure. Affected surfaces, breaking changes, rollout risk — deeper than `plan`'s Risks line. Skip for isolated/local changes. |
-| `/estimate` | Once a plan is approved. Decomposes it into the minimum reasonable number of executable slices (goal, scope, dependencies, verification criteria, range estimate each), and initializes the task's state. After work: actual vs. estimate, recorded in a structured format for future calibration. |
+| `/estimate` | Once a plan is approved. Decomposes it into the minimum reasonable number of executable slices, each covering specific acceptance criteria (goal, scope, dependencies, criteria covered, verification criteria, story-point estimate), and initializes the task's state. After work: actual vs. estimate, recorded for future calibration. |
 | `/challenge` | A plan or decision carries real weight and has no second reviewer. Stress-tests the reasoning — weakest assumptions, simpler alternative, verdict. Not a repeat of `plan`'s risks. |
 
 **EXECUTE** — manage incremental implementation against a plan.
 
 | Skill | Use it when |
 |---|---|
-| `/next` | Deciding what to safely do next for a task (`/next` or `/next TASK-NNN`). The execution dispatcher: reads that task's plan, slice map, and state, and reports one canonical state — `READY`, `VERIFYING`, `BLOCKED`, `RECOVERABLE`, `REPLAN_REQUIRED`, or `COMPLETE` — routing automatically through verification/debug rather than making you orchestrate every step. |
-| `/verify` | The current slice needs objective proof before moving on — tests, lint, types, build, checked against the slice's stated verification criteria. Reports PASS/FAIL/UNKNOWN per check; never claims success without evidence. |
-| `/status` | Checking where things stand (`/status` or `/status TASK-NNN`) without changing anything. Reports one task's state or a compact list of all active tasks, straight from `.ai/state.md`. |
+| `/next` | Deciding what to safely do next for a task (`/next` or `/next TASK-NNN`). The execution dispatcher: reads that task's plan, slice map, and state, and reports one canonical state — `READY`, `VERIFYING`, `BLOCKED`, `RECOVERABLE`, `REPLAN_REQUIRED`, or `COMPLETE` — routing automatically through verification/debug rather than making you orchestrate every step. `COMPLETE` means every acceptance criterion is verified, not just every slice touched. |
+| `/verify` | The primary mechanism proving a slice is actually done — not code quality, that's `/review`. Checks each acceptance criterion the slice covers with the method it calls for (unit/integration/e2e/performance/security/manual/…) and marks it `VERIFIED`/`FAILED`/`BLOCKED`/`NOT_VERIFIED` with evidence. Never claims `VERIFIED` without it. |
+| `/status` | Checking where things stand (`/status` or `/status TASK-NNN`) without changing anything. Reports one task's state and acceptance progress, or a compact list of all active tasks, straight from `.ai/state.md`. |
 
 **QUALITY** — validate the result.
 
 | Skill | Use it when |
 |---|---|
 | `/test` | Designing the test strategy for a change. Smallest useful set: must-test, edge cases, failure cases, optional. |
-| `/review` | After a meaningful slice (local) or a finished feature (final). Finds problems first — Critical/High/Medium/Low — instead of rewriting half the project. |
+| `/review` | After a meaningful slice (local) or a finished feature (final). Finds problems first — Critical/High/Medium/Low — instead of rewriting half the project. Quality/architecture only; separate from `/verify`'s acceptance-criteria judgment — a change can pass one and not the other. |
 | `/debug` | Investigating a bug. Root-cause first, no speculative fixes, minimal fix at the end. `/verify` failures route here; the fix routes back to `/verify`. |
 | `/short` | Compress any input — task, code, doc, plan, error, conversation — into a 1-2 sentence plain-language explanation. Compression, not analysis. |
+
+**SETUP** — advise on project-specific Claude Code configuration. Independent of the workflow chain; run it any time.
+
+| Skill | Use it when |
+|---|---|
+| `/audit` | Sizing up a project's Claude Code setup. Inspects the repo and recommends at most a handful of evidence-based customizations (rules, skills, hooks, subagents, MCP, tooling) justified by actual structure and recurring friction. Intentionally conservative — advisory only, never installs or modifies anything, and says so when nothing is missing. |
 
 ### Installing
 
@@ -122,18 +128,19 @@ For tasks big enough to need multi-slice tracking across sessions, a task gets a
 
 ```
 .ai/
-├── plan.md        # the destination — plan + slice map, written by /plan, sliced by /estimate
-├── state.md        # the current position of every task — one block per id, owned by /next + /verify
+├── plan.md        # the destination — plan + acceptance criteria + slice map, written by /plan, sliced by /estimate
+├── state.md        # the current position of every task, incl. per-criterion verification status — one block per id, owned by /next + /verify
 └── decisions.md     # meaningful decisions worth not rediscovering, append-only, tagged by task id
 ```
 
 ```
-TASK ──▶ classify ──▶ plan + estimate ──▶ state ──▶ next ──▶ slice ──▶ verify ──▶ state ──▶ next ──▶ …
+TASK ──▶ classify ──▶ clarify ──▶ plan+estimate ──▶ state ──▶ next ──▶ slice ──▶ verify ──▶ state ──▶ next ──▶ …
 ```
 
 Created lazily — a task that doesn't need it never gets a `.ai/` folder or a `TASK-NNN` id. Full contract in `rules/core/execution-state.md`, in short:
 
-- `.ai/state.md` is the single source of truth for a task's position: state (`READY`/`EXECUTING`/`VERIFYING`/`BLOCKED`/`RECOVERABLE`/`REPLAN_REQUIRED`/`COMPLETE`), current slice, last action, next action, blockers. State is advisory; the repo (git diff, test output) is always ground truth.
+- **Acceptance criteria drive everything.** `/clarify` drafts them (`AC-NNN`, classified `CONFIRMED`/`INFERRED`/`UNKNOWN`), `/plan` finalizes and persists them into `.ai/plan.md`, `/estimate` maps each slice to the criteria it covers, and `/verify` is what actually marks a criterion `VERIFIED` — with evidence, never on confidence alone. A task is `COMPLETE` when every criterion is `VERIFIED`, not when the code looks done.
+- `.ai/state.md` is the single source of truth for a task's position: state (`READY`/`EXECUTING`/`VERIFYING`/`BLOCKED`/`RECOVERABLE`/`REPLAN_REQUIRED`/`COMPLETE`), current slice, last action, next action, blockers, and each acceptance criterion's verification status (`VERIFIED`/`FAILED`/`BLOCKED`/`NOT_VERIFIED`) with its evidence. State is advisory; the repo (git diff, test output) is always ground truth.
 - Only `/next`, `/verify`, `/plan`, and `/estimate` write inside `.ai/`, and nowhere else — never source code, configs, or other project files.
 - Commit `.ai/` to the project's own repo by default, so a new session or a teammate can resume without replaying the conversation.
 
@@ -144,11 +151,18 @@ Work through it mostly with `/next` and `go`:
   Task: TASK-003 — Migrate tenant authorization
   State: READY
   Slice: 3/5 — application authorization
+  Covers: AC-002
   Verification: role checks enforced on all tenant routes; auth tests pass
   Ready to execute.
 
 go
   ⋮ (implemented, then verified automatically)
+
+/verify
+  Acceptance:
+  AC-002 VERIFIED
+    Evidence: pytest tests/tenants/test_authz.py — 6 passed
+  Overall: 2/4 criteria verified for this slice
 
 /next
   Task: TASK-003 — Migrate tenant authorization
@@ -169,6 +183,7 @@ go
   TASK-003 — Migrate tenant authorization
   State: RECOVERABLE
   Current slice: 3/5
+  Acceptance: 2/4 criteria verified
   Last action: application authorization implemented
   Next: /debug → /verify
   Blocked: no
@@ -268,6 +283,7 @@ skills/
   review/SKILL.md
   debug/SKILL.md
   short/SKILL.md
+  audit/SKILL.md
 rules/
   core/
     engineering.md

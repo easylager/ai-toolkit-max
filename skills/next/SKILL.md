@@ -21,10 +21,10 @@ Given `/next TASK-NNN` for an id that doesn't exist in `.ai/state.md`, say so �
 
 - **READY** — a slice is ready to execute.
 - **VERIFYING** — a slice is implemented and needs `/verify`.
-- **BLOCKED** — execution needs something external: credentials, tool/MCP access, an external API, infrastructure, or a user decision. Never resolvable by Claude alone.
+- **BLOCKED** — execution needs something external: credentials, tool/MCP access, an external API, infrastructure, or a user decision — including an `UNKNOWN` acceptance criterion that would block safe implementation (see `rules/core/execution-state.md`). Never resolvable by Claude alone.
 - **RECOVERABLE** — verification failed for a local, understandable reason (failing test, wrong implementation, type error, integration mistake, straightforward regression). Routes to `/debug` → `/verify` → READY, normally without asking the user first.
-- **REPLAN_REQUIRED** — the failure or new information invalidates an assumption in the approved plan (wrong architecture, a dependency behaving differently than assumed, a "local" change turning out to be cross-service, a slice fundamentally bigger/different than estimated, a needed capability that doesn't exist). Routes to `/plan` → `/estimate` → READY. Always stop and tell the user — never patch around an invalidated plan.
-- **COMPLETE** — all slices implemented and verified. Recommend final `/verify` and `/review`; don't generate further work.
+- **REPLAN_REQUIRED** — the failure or new information invalidates an assumption in the approved plan (wrong architecture, a dependency behaving differently than assumed, a "local" change turning out to be cross-service, a slice fundamentally bigger/different than estimated, a needed capability that doesn't exist, or an acceptance criterion itself changing — a confirmed one turning out wrong, a new one surfacing, an unknown resolving in a way that invalidates planned slices). Routes to `/plan` → `/estimate` → READY. Always stop and tell the user — never patch around an invalidated plan.
+- **COMPLETE** — every acceptance criterion in `.ai/state.md` is `VERIFIED`, not merely every slice implemented. Recommend final `/verify` and `/review`; don't generate further work.
 
 EXECUTING (actually implementing a slice) is not a state `next` reports — it's the runtime interval between a READY dispatch and its checkpoint. If `.ai/state.md` shows a slice still EXECUTING (e.g., resumed after an interrupted session), don't trust it — re-derive status from the repo.
 
@@ -36,6 +36,8 @@ EXECUTING (actually implementing a slice) is not a state `next` reports — it's
 - If no slice map exists yet, say so and recommend `/estimate` rather than improvising slices.
 - A slice already implemented but unverified is VERIFYING, not a new READY slice — don't propose work on top of unverified work.
 - A failed verification is always RECOVERABLE or REPLAN_REQUIRED, never a bare "it failed" — classify it using the definitions above before reporting.
+- Among multiple READY slices, prefer the one that moves a `NOT_VERIFIED` or `FAILED` acceptance criterion toward `VERIFIED` — the goal is verified acceptance, not code volume.
+- Never report COMPLETE from slice count alone — cross-check `.ai/state.md`'s Acceptance block; a task with unverified or failed criteria isn't COMPLETE even if every slice was touched.
 - If a slice touches shared/public surfaces, recommend `/impact` rather than assessing it here.
 - If a slice represents a weighty, hard-to-reverse decision, recommend `/challenge` rather than assessing it here.
 - Model/profile suggestions are advisory text carried over from `/estimate` — never claim to switch models automatically.
@@ -53,6 +55,7 @@ State: READY
 Slice: <id/name> (<n>/<total>)
 Goal: <one line>
 Scope: <files/areas — omit if obvious from Goal>
+Covers: <acceptance criterion id(s) this slice targets — omit if none>
 Verification: <criteria from the slice map>
 Model: <suggested profile — omit if not useful>
 Estimate: <story points, from the slice map>
@@ -94,5 +97,6 @@ Next: `/plan` → `/estimate`.
 ```
 Task: <id> — <title>
 State: COMPLETE
+Acceptance: <n>/<n> criteria verified
 ```
-One line: all slices done, recommend final `/verify` and `/review`.
+One line: all criteria verified, recommend final `/verify` and `/review`.

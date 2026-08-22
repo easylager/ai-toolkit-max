@@ -24,6 +24,7 @@ Report execution state exactly as recorded in `.ai/state.md`. Never modify anyth
 <id> — <title>
 State: <state>
 Current slice: <n/total, or "n/a">
+Acceptance: <n>/<m> criteria verified — omit if none recorded
 Last action: <omit if not recorded>
 Next: <omit if not recorded>
 Blocked: <reason, or "no">

@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "ai-toolkit-max",
-  "description": "Reusable engineering toolkit: rules (how to engineer) + skills across ENTRY (classify), THINK (clarify, plan, impact, estimate, challenge), EXECUTE (next, verify, status), and QUALITY (test, review, debug, short).",
+  "description": "Reusable engineering toolkit: rules (how to engineer) + skills across ENTRY (classify), THINK (clarify, plan, impact, estimate, challenge), EXECUTE (next, verify, status), QUALITY (test, review, debug, short), and SETUP (audit).",
   "owner": {
     "name": "easylager"
   },
@@ -9,7 +9,7 @@
     {
       "name": "ai-toolkit-max",
       "source": "./",
-      "description": "Thirteen lean workflow skills plus core/backend/frontend engineering rules, including a minimal .ai/ execution-state contract."
+      "description": "Fourteen lean workflow skills plus core/backend/frontend engineering rules, including a minimal .ai/ execution-state contract."
     }
   ]
 }

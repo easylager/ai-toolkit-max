@@ -1,6 +1,6 @@
 ---
 name: estimate
-description: Decompose an approved plan into the minimum reasonable number of executable slices and range-estimate each, or compare actual vs. estimate after work. Exposes assumptions and uncertainty instead of false precision.
+description: Decompose an approved plan into the minimum reasonable number of executable slices, each mapped to the acceptance criteria it covers, and story-point each (including verification effort) — or compare actual vs. estimate after work. Exposes assumptions and uncertainty instead of false precision.
 ---
 
 # Estimate
@@ -12,17 +12,19 @@ Two modes, chosen from the input:
 
 ## Rules
 
-- Take the existing plan as primary input — `.ai/plan.md` if present, otherwise the plan already produced in this conversation. Don't re-derive requirements or approach `/plan` already settled.
-- Decompose into the minimum reasonable number of slices. A slice is a meaningful, independently verifiable unit of work, not a coding step — do not list file-by-file implementation actions unless one is needed to mark a slice boundary.
+- Take the existing plan as primary input — `.ai/plan.md` if present, otherwise the plan already produced in this conversation. Don't re-derive requirements or approach `/plan` already settled. Read the plan's acceptance criteria along with it — they drive decomposition, not just the Changes list.
+- Decompose into the minimum reasonable number of slices. A slice is a meaningful, independently verifiable unit of work, not a coding step — do not list file-by-file implementation actions unless one is needed to mark a slice boundary. Prefer slices that each move one or more acceptance criteria toward verified, over slices organized by implementation layer (e.g. "models", "services", "tests" as separate slices).
 - Do not create artificial micro-slices. A small, well-understood plan can be a single slice — don't force decomposition.
+- Every acceptance criterion from the plan should be covered by at least one slice's `Covers:`. Flag any criterion with no covering slice instead of silently leaving it unaddressed.
 - The slice map is an initial execution map, not a contract: `/next` may split, merge, reorder, or re-estimate slices as execution surfaces new information.
 - Do not write implementation code.
 - Estimate in story points, not time (hours/days). Use the Fibonacci-like scale 1, 2, 3, 5, 8, 13, 21 — points reflect relative effort/complexity/uncertainty, not calendar duration. Never output a time unit.
+- A slice's points cover implementation and its verification together — writing/running tests, integration or E2E setup, load/performance runs where a criterion calls for them. Don't estimate coding effort only and treat verification as free. Flag when a criterion's verification method (e.g. load testing, E2E setup) materially dominates a slice's cost.
 - A slice above ~8 points is a signal it's too coarse — prefer splitting it rather than reporting a single large-point estimate.
 - Expose the assumptions and unknowns each estimate depends on.
-- State each slice's verification criteria concretely enough for `/verify` to check against — not a restatement of the goal.
+- State each slice's verification criteria concretely enough for `/verify` to check against — not a restatement of the goal. Refine the plan's method/level (e.g. "integration test") into the concrete check this slice must pass where that's already knowable; leave it at method/level otherwise.
 - Do not fabricate historical data. If none exists, say so instead of inventing it.
-- Do not modify files, except: writing the slice map into `.ai/plan.md`'s Slices section when `.ai/` is in use; initializing the task's block in `.ai/state.md` (state `READY`, current slice 1/total) the first time a slice map is created for it; and appending the post-work Record into that task's block in `.ai/state.md` — see `rules/core/execution-state.md`.
+- Do not modify files, except: writing the slice map into `.ai/plan.md`'s Slices section when `.ai/` is in use; initializing the task's block in `.ai/state.md` (state `READY`, current slice 1/total, each of the plan's acceptance criteria set to `NOT_VERIFIED`) the first time a slice map is created for it; and appending the post-work Record into that task's block in `.ai/state.md` — see `rules/core/execution-state.md`.
 
 ## Output — pre-work
 
@@ -36,6 +38,7 @@ Per slice:
 Goal: <one line>
 Scope: <files/areas>
 Depends on: <other slice(s) — omit if none>
+Covers: <acceptance criterion id(s) this slice verifies — omit only if the slice has no directly attributable criterion>
 Verification: <criteria this slice must satisfy — tests, behavior, checks>
 Estimate: <story points — single value from 1, 2, 3, 5, 8, 13, 21, or a range across two adjacent values if genuinely uncertain>
 Risk: <main uncertainty — omit if not material>
