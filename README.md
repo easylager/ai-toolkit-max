@@ -12,7 +12,7 @@ A reusable engineering toolkit for Claude Code, split into two layers:
           │                                 │
         RULES                            SKILLS
           │                                 │
-   ┌──────┼──────┐          THINK:    clarify · plan · impact · estimate · challenge
+   ┌──────┼──────┐          THINK:    clarify · design · plan · impact · estimate · challenge
    ↓      ↓      ↓          EXECUTE:  next · verify   (implementing itself is native)
  core  backend frontend     QUALITY:  test · review · short
 ```
@@ -20,7 +20,7 @@ A reusable engineering toolkit for Claude Code, split into two layers:
 - **Rules** answer *how I should engineer* — always-on principles you pull into a project's `CLAUDE.md`.
 - **Skills** answer *what process should I run now* — on-demand workflows you invoke with `/clarify`, `/plan`, etc.
 
-Process depth is meant to scale with the task. `classify` is the entry point: it looks at the task and recommends the minimum chain needed — a trivial change is just `implement → verify`; a risky or ambiguous one pulls in `clarify → plan → estimate → impact/challenge → next → implement → verify → review`. See `rules/core/engineering.md`. There's no skill for "implement" — writing the code is Claude's normal behavior, not a separate mode.
+Process depth is meant to scale with the task. `classify` is the entry point: it looks at the task and recommends the minimum chain needed — a trivial change is just `implement → verify`; a risky or ambiguous one pulls in `clarify → plan → estimate → impact/challenge → next → implement → verify → review`; a UI-facing one inserts `design` between `clarify` and `plan`. See `rules/core/engineering.md`. There's no skill for "implement" — writing the code is Claude's normal behavior, not a separate mode.
 
 ## Installation
 
@@ -64,7 +64,7 @@ Both are idempotent — safe to re-run any time. Two more modes, documented belo
 
 ## Skills
 
-Fourteen skills, each a distinct mode of work rather than a fixed pipeline stage. None of them are mandatory gates — invoke only what the task warrants.
+Fifteen skills, each a distinct mode of work rather than a fixed pipeline stage. None of them are mandatory gates — invoke only what the task warrants.
 
 **ENTRY** — decide how much process the task deserves.
 
@@ -77,6 +77,7 @@ Fourteen skills, each a distinct mode of work rather than a fixed pipeline stage
 | Skill | Use it when |
 |---|---|
 | `/clarify` | Before implementing anything ambiguous. Drafts an Acceptance Contract: candidate acceptance criteria classified CONFIRMED/INFERRED/UNKNOWN, their verification approach, and the questions needed to resolve what's open — the entry point for acceptance criteria in the workflow. |
+| `/design` | The task is UI-facing and no design context exists yet. Builds a disposable HTML/CSS/JS prototype, iterates on it with the user in-browser, and hands off an `APPROVED` prototype as `/plan`'s primary UI source — replacing a Figma lookup when no Figma file exists. |
 | `/plan` | Once requirements are clear. Produces a concise implementation plan anchored to `/clarify`'s acceptance criteria — every meaningful criterion mapped to a change and a test, flagged if it has neither. |
 | `/impact` | The change touches shared code, public interfaces, migrations, or infrastructure. Affected surfaces, breaking changes, rollout risk — deeper than `plan`'s Risks line. Skip for isolated/local changes. |
 | `/estimate` | Once a plan is approved. Decomposes it into the minimum reasonable number of executable slices, each covering specific acceptance criteria (goal, scope, dependencies, criteria covered, verification criteria, story-point estimate), and initializes the task's state. After work: actual vs. estimate, recorded for future calibration. |
@@ -280,6 +281,7 @@ tests/
 skills/
   classify/SKILL.md
   clarify/SKILL.md
+  design/SKILL.md
   plan/SKILL.md
   impact/SKILL.md
   estimate/SKILL.md
