@@ -8,8 +8,11 @@ detect_project_rules() {
   if find "$dir" -maxdepth 2 \( -iname "*.py" -o -iname "pyproject.toml" -o -iname "requirements.txt" \) 2>/dev/null | grep -q .; then
     echo "backend/python.md"
   fi
-  if [ -f "$dir/package.json" ] && grep -q '"react"' "$dir/package.json" 2>/dev/null; then
-    echo "frontend/react.md"
+  if [ -f "$dir/package.json" ]; then
+    echo "frontend/design.md"
+    if grep -q '"react"' "$dir/package.json" 2>/dev/null; then
+      echo "frontend/react.md"
+    fi
   fi
 }
 

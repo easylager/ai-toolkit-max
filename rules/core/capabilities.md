@@ -16,7 +16,7 @@ Never invent or assume access to an MCP that isn't configured in this session. I
 | GitHub | issues, PRs, review comments, repo history | `clarify`, `plan`, `review` | minimum scope needed, prefer read |
 | Figma | design/layout context, when a Figma file already exists for this UI | `plan`, before implementing UI, only if no approved `/design` prototype exists | read, unless a change is explicitly requested |
 | Context7 | current/version-specific library docs | `plan`, `debug` | read |
-| Playwright / Chrome DevTools | browser automation, DOM/console/network inspection | `verify`, `debug` | no destructive action without explicit authorization |
+| Playwright / Chrome DevTools | browser automation, DOM/console/network inspection | `design` (prototype screenshot), `design-review` (rendered-UI screenshot), `verify`, `debug` | no destructive action without explicit authorization |
 | Sentry | production errors, stack traces, events | `verify`, `debug` | read |
 | Postgres | schema/data inspection | `verify`, `debug` | read-only |
 
