@@ -24,6 +24,7 @@ project: <slug — only needed once TASK_CONTEXT_ROOT is a shared external vault
 status: READY | EXECUTING | VERIFYING | BLOCKED | RECOVERABLE | REPLAN_REQUIRED | COMPLETE
 phase: clarify | design | plan | estimate | implement | verify | review
 priority: <optional, human-set>
+creative_autonomy: HIGH | MEDIUM | LOW <optional, human-set, default HIGH — see rules/frontend/design.md and skills/creative-explore/SKILL.md>
 created_at: <date>
 updated_at: <date>
 branch: <optional>
@@ -95,7 +96,7 @@ Per-criterion `Evidence`/`Verified at` is the only evidence store — there is d
 
 ## Ownership
 
-- **Human-controlled** — Claude proposes only when explicitly asked, never silently overwrites: `title`, `priority`, Objective, Business Context, Constraints, Human Overrides.
+- **Human-controlled** — Claude proposes only when explicitly asked, never silently overwrites: `title`, `priority`, `creative_autonomy`, Objective, Business Context, Constraints, Human Overrides.
 - **Shared** — Claude proposes, a human edit is authoritative: Acceptance Criteria, Edge Cases, Decisions, Test Strategy, Assumptions, Scope, Open Questions.
 - **AI-managed** — Claude writes; a human can still hand-edit (e.g. to unblock): `status`, `phase`, Slices, Progress, Blockers, Next Action, Execution History.
 
