@@ -11,7 +11,7 @@ Create an implementation plan for the current task, built around its Acceptance 
 
 - Analyze the existing repository before proposing changes.
 - Reuse existing patterns and abstractions when appropriate.
-- Before finalizing Changes, check whether an available external capability would materially reduce implementation uncertainty — design context (Figma), current library documentation (Context7), related PRs/issues (GitHub) — per `rules/core/capabilities.md`. Use it only if it changes what gets built; never invent access to one that isn't configured.
+- Before finalizing Changes on a UI-facing task, check this conversation for an `APPROVED` `/design` prototype and use it as the primary UI source. If none exists, check whether an available external capability would materially reduce implementation uncertainty — design context (Figma), current library documentation (Context7), related PRs/issues (GitHub) — per `rules/core/capabilities.md`. Use it only if it changes what gets built; never invent access to one that isn't configured.
 - Take `/clarify`'s draft acceptance criteria as the starting point when one exists in this conversation; otherwise derive criteria directly from the request using the same CONFIRMED/INFERRED/UNKNOWN classification (see `skills/clarify/SKILL.md`).
 - Only promote an `INFERRED` criterion to `CONFIRMED` if the conversation actually confirmed it — never upgrade a status just because a plan is being written. Carry unresolved `INFERRED`/`UNKNOWN` criteria forward as-is.
 - Every meaningful acceptance criterion must be traceable to at least one entry in Changes or Tests. Flag any criterion with no implementation or verification path instead of silently dropping it.
