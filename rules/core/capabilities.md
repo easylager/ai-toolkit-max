@@ -6,7 +6,7 @@ External systems Claude can reach are capabilities, not requirements. A skill de
 
 Before reaching for an MCP: can the repository, git history, or local tooling already answer this? If yes, use that. Only invoke an MCP when it's the minimum one that supplies a fact or evidence the local context can't.
 
-Never invent or assume access to an MCP that isn't configured in this session. If the ideal capability is unavailable, use the best available alternative and say so explicitly only when the gap materially affects confidence in the result — an MCP hint is never a blocking requirement by itself.
+Never invent or assume access to an MCP that isn't configured in this session. If the ideal capability is unavailable, use the best available alternative and say so explicitly only when the gap materially affects confidence in the result — an MCP hint is never a blocking requirement by itself. This includes image generation: `design`/`creative-explore` use one for Asset Strategy outputs (`rules/frontend/design.md`) only if it's actually configured, falling back to SVG/CSS/procedural/3D/no-asset otherwise — never a fabricated capability.
 
 ## Registry
 

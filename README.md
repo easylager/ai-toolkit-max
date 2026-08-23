@@ -12,7 +12,7 @@ A reusable engineering toolkit for Claude Code, split into two layers:
           │                                 │
         RULES                            SKILLS
           │                                 │
-   ┌──────┼──────┐          THINK:    task · clarify · design · plan · impact · estimate · challenge
+   ┌──────┼──────┐          THINK:    task · clarify · design · creative-explore · plan · impact · estimate · challenge
    ↓      ↓      ↓          EXECUTE:  next · verify · reconcile   (implementing itself is native)
  core  backend frontend     QUALITY:  test · review · design-review · short
 ```
@@ -20,7 +20,7 @@ A reusable engineering toolkit for Claude Code, split into two layers:
 - **Rules** answer *how I should engineer* — always-on principles you pull into a project's `CLAUDE.md`.
 - **Skills** answer *what process should I run now* — on-demand workflows you invoke with `/clarify`, `/plan`, etc.
 
-Process depth is meant to scale with the task. `classify` is the entry point: it looks at the task and recommends the minimum chain needed — a trivial change is just `implement → verify`; a risky or ambiguous one pulls in `clarify → plan → estimate → impact/challenge → next → implement → verify → review`; a UI-facing one inserts `design` between `clarify` and `plan`, and `design-review` between `implement` and `verify`; resuming a task without conversation context inserts `reconcile` before `next`. See `rules/core/engineering.md`. There's no skill for "implement" — writing the code is Claude's normal behavior, not a separate mode.
+Process depth is meant to scale with the task. `classify` is the entry point: it looks at the task and recommends the minimum chain needed — a trivial change is just `implement → verify`; a risky or ambiguous one pulls in `clarify → plan → estimate → impact/challenge → next → implement → verify → review`; a UI-facing one inserts `design` between `clarify` and `plan`, and `design-review` between `implement` and `verify`; a significant visual project (a new major page, a new product surface) additionally inserts `creative-explore` between `design` and `plan` to generate and evaluate several genuinely different concepts before committing to one; resuming a task without conversation context inserts `reconcile` before `next`. See `rules/core/engineering.md`. There's no skill for "implement" — writing the code is Claude's normal behavior, not a separate mode.
 
 ## Installation
 
@@ -64,7 +64,7 @@ Both are idempotent — safe to re-run any time. Two more modes, documented belo
 
 ## Skills
 
-Eighteen skills, each a distinct mode of work rather than a fixed pipeline stage. None of them are mandatory gates — invoke only what the task warrants.
+Nineteen skills, each a distinct mode of work rather than a fixed pipeline stage. None of them are mandatory gates — invoke only what the task warrants.
 
 **ENTRY** — decide how much process the task deserves.
 
@@ -78,7 +78,8 @@ Eighteen skills, each a distinct mode of work rather than a fixed pipeline stage
 |---|---|
 | `/task` | Starting a task outside `/clarify`/`/plan` — from a bare idea or an existing note. Creates or opens the task's Task Context file (`.ai/tasks/TASK-NNN.md` by default, or the configured Obsidian vault). |
 | `/clarify` | Before implementing anything ambiguous. Drafts an Acceptance Contract: candidate acceptance criteria classified CONFIRMED/INFERRED/UNKNOWN, their verification approach, and the questions needed to resolve what's open — the entry point for acceptance criteria in the workflow. |
-| `/design` | The task is UI-facing and no design context exists yet. Builds a disposable HTML/CSS/JS prototype, iterates on it with the user in-browser, and hands off an `APPROVED` prototype as `/plan`'s primary UI source — replacing a Figma lookup when no Figma file exists. |
+| `/design` | The task is UI-facing and no design context exists yet. Autonomously decides typography/color/composition/motion/3D (asking the user only for genuine business/brand input), builds a disposable HTML/CSS/JS prototype, iterates on it with the user in-browser, and hands off an `APPROVED` prototype as `/plan`'s primary UI source — replacing a Figma lookup when no Figma file exists. |
+| `/creative-explore` | A significant visual project — a new major page, a new product surface, or an explicit request for something distinctive/premium. Generates 3-5 genuinely different creative concepts (not color variants), self-evaluates them, runs each through the Anti-Slop Review, and recommends one with reasoning. Skip for routine UI work — `/design`'s own autonomous Art Direction step is enough there. |
 | `/plan` | Once requirements are clear. Produces a concise implementation plan anchored to `/clarify`'s acceptance criteria — every meaningful criterion mapped to a change and a test, flagged if it has neither. |
 | `/impact` | The change touches shared code, public interfaces, migrations, or infrastructure. Affected surfaces, breaking changes, rollout risk — deeper than `plan`'s Risks line. Skip for isolated/local changes. |
 | `/estimate` | Once a plan is approved. Decomposes it into the minimum reasonable number of executable slices, each covering specific acceptance criteria (goal, scope, dependencies, criteria covered, verification criteria, story-point estimate), and initializes the task's state. After work: actual vs. estimate, recorded for future calibration. |
@@ -291,6 +292,7 @@ skills/
   task/SKILL.md
   clarify/SKILL.md
   design/SKILL.md
+  creative-explore/SKILL.md
   plan/SKILL.md
   impact/SKILL.md
   estimate/SKILL.md
