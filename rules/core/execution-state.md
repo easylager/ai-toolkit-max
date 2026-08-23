@@ -60,9 +60,22 @@ Next: <next slice/action>
 
 ## Autonomy
 
-Keep moving through the loop above without asking when the next action is obvious, the change is low-risk, the task's acceptance criteria in the task file are unchanged from what was last approved, and verification passes — this includes RECOVERABLE failures, which route through `/debug` → `/verify` automatically.
+This applies across the whole task lifecycle, not just the post-plan execution loop — `skills/execute/SKILL.md` is what actually drives a task through it end to end, chaining `/clarify` → `/design`/`/creative-explore` → `/plan` → `/estimate` → the execution loop below → `/design-review` → `/review` within one invocation instead of requiring a separate prompt per skill; `/next`, `/clarify`, `/design`, `/verify`, and the rest remain independently invocable for manual, granular control.
 
-Stop and ask the user when: the state is REPLAN_REQUIRED (an architectural decision is required, requirements or an acceptance criterion changed, or a significant unexpected dependency surfaces), the state is BLOCKED (missing credentials, tool/external access, infrastructure, or a decision only the user can make — including an `UNKNOWN` acceptance criterion that blocks safe implementation), or continuing would require guessing business intent. Never silently change the approved plan or an acceptance criterion's requirement status, skip verification, mark a criterion VERIFIED without evidence, mark a failed slice complete, or invent access that doesn't exist — when a situation is ambiguous, stop with a concise explanation instead of assuming.
+Keep moving without asking when the next action is obvious, the change is low-risk, the task's acceptance criteria in the task file are unchanged from what was last approved, and verification passes — this includes RECOVERABLE failures, which route through `/debug` → `/verify` automatically.
+
+Stop and ask the user at exactly four points (Human Gates) — never invent additional ones:
+
+- **Requirements** — an `UNKNOWN` acceptance criterion would block safe implementation, or continuing would require guessing business intent.
+- **Creative Approval** — `/design` or `/creative-explore` produced a recommendation still `DRAFT` (see `skills/design/SKILL.md`).
+- **High-risk action** — the next action is destructive or hard to reverse: force-push, `reset --hard`, dropping data, a production deploy, a credential change, a major architectural rewrite, modifying a critical business rule. Same bar as the standing "Executing actions with care" guidance — this isn't a separate, looser policy for autonomous runs.
+- **Final review** — before reporting `COMPLETE`: every acceptance criterion `VERIFIED`, `/review` run with no open Critical/High findings, `/design-review` run (if the task went through `/design`) with a "matches approved design intent" assessment, no unresolved blockers.
+
+A Human Gate is never a new state value — it's always the existing `BLOCKED` status (or `DRAFT`, for Creative Approval) with the specific reason recorded in `Blockers` or the relevant skill's own status field. The state is also `REPLAN_REQUIRED` when an architectural decision is required, requirements or an acceptance criterion changed, or a significant unexpected dependency surfaces — always stop and tell the user rather than patch around an invalidated plan. Never silently change the approved plan or an acceptance criterion's requirement status, skip verification, mark a criterion VERIFIED without evidence, mark a failed slice complete, or invent access that doesn't exist — when a situation is ambiguous, stop with a concise explanation instead of assuming.
+
+## Loop detection
+
+Track repeated attempts at the same phase via `Execution History`. If the same phase fails with the same failure signature (same test, same error, same diff shape) for `max_verify_iterations` consecutive attempts (`.ai/config`'s `max_verify_iterations` key if set, default 3), stop rather than retrying again hoping for a different result — report what was attempted, how many times, why it isn't progressing, and the specific human decision needed. This is a `BLOCKED` outcome, not a silent failure or an infinite retry.
 
 ## Principles
 

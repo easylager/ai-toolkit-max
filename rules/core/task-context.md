@@ -22,7 +22,7 @@ task_id: TASK-NNN
 title: <short title>
 project: <slug — only needed once TASK_CONTEXT_ROOT is a shared external vault>
 status: READY | EXECUTING | VERIFYING | BLOCKED | RECOVERABLE | REPLAN_REQUIRED | COMPLETE
-phase: clarify | design | plan | estimate | implement | verify | review
+phase: clarify | design | creative-explore | plan | estimate | implement | verify | design-review | review
 priority: <optional, human-set>
 creative_autonomy: HIGH | MEDIUM | LOW <optional, human-set, default HIGH — see rules/frontend/design.md and skills/creative-explore/SKILL.md>
 created_at: <date>
