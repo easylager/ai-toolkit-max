@@ -14,13 +14,13 @@ A reusable engineering toolkit for Claude Code, split into two layers:
           │                                 │
    ┌──────┼──────┐          THINK:    task · clarify · design · plan · impact · estimate · challenge
    ↓      ↓      ↓          EXECUTE:  next · verify · reconcile   (implementing itself is native)
- core  backend frontend     QUALITY:  test · review · short
+ core  backend frontend     QUALITY:  test · review · design-review · short
 ```
 
 - **Rules** answer *how I should engineer* — always-on principles you pull into a project's `CLAUDE.md`.
 - **Skills** answer *what process should I run now* — on-demand workflows you invoke with `/clarify`, `/plan`, etc.
 
-Process depth is meant to scale with the task. `classify` is the entry point: it looks at the task and recommends the minimum chain needed — a trivial change is just `implement → verify`; a risky or ambiguous one pulls in `clarify → plan → estimate → impact/challenge → next → implement → verify → review`; a UI-facing one inserts `design` between `clarify` and `plan`; resuming a task without conversation context inserts `reconcile` before `next`. See `rules/core/engineering.md`. There's no skill for "implement" — writing the code is Claude's normal behavior, not a separate mode.
+Process depth is meant to scale with the task. `classify` is the entry point: it looks at the task and recommends the minimum chain needed — a trivial change is just `implement → verify`; a risky or ambiguous one pulls in `clarify → plan → estimate → impact/challenge → next → implement → verify → review`; a UI-facing one inserts `design` between `clarify` and `plan`, and `design-review` between `implement` and `verify`; resuming a task without conversation context inserts `reconcile` before `next`. See `rules/core/engineering.md`. There's no skill for "implement" — writing the code is Claude's normal behavior, not a separate mode.
 
 ## Installation
 
@@ -64,7 +64,7 @@ Both are idempotent — safe to re-run any time. Two more modes, documented belo
 
 ## Skills
 
-Seventeen skills, each a distinct mode of work rather than a fixed pipeline stage. None of them are mandatory gates — invoke only what the task warrants.
+Eighteen skills, each a distinct mode of work rather than a fixed pipeline stage. None of them are mandatory gates — invoke only what the task warrants.
 
 **ENTRY** — decide how much process the task deserves.
 
@@ -99,6 +99,7 @@ Seventeen skills, each a distinct mode of work rather than a fixed pipeline stag
 |---|---|
 | `/test` | Designing the test strategy for a change. Smallest useful set: must-test, edge cases, failure cases, optional. |
 | `/review` | After a meaningful slice (local) or a finished feature (final). Finds problems first — Critical/High/Medium/Low — instead of rewriting half the project. Quality/architecture only; separate from `/verify`'s acceptance-criteria judgment — a change can pass one and not the other. |
+| `/design-review` | After implementing a UI-facing task that went through `/design`, before `/verify`/`/review`. Renders the real (not prototype) UI in a browser, screenshots it, and critiques it against the Design Brief/Art Direction — hierarchy, spacing, generic-AI-aesthetic drift, a spot-check of responsive/motion/a11y/perf. The visual counterpart to `/review`. |
 | `/debug` | Investigating a bug. Root-cause first, no speculative fixes, minimal fix at the end. `/verify` failures route here; the fix routes back to `/verify`. |
 | `/short` | Compress any input — task, code, doc, plan, error, conversation — into a 1-2 sentence plain-language explanation. Compression, not analysis. |
 
@@ -208,6 +209,7 @@ Markdown principle sets, grouped so you only pull in what's relevant to the proj
 | `rules/core/task-context.md` | The Task Context document contract — schema, human/AI ownership, reconciliation, staleness, `TASK_CONTEXT_ROOT` resolution. |
 | `rules/core/capabilities.md` | How to treat MCPs: minimum-capability selection, the registry of which MCP serves which skill, and default permission levels. |
 | `rules/backend/python.md` | Python/FastAPI conventions — typing, async, thin routes, Pydantic. |
+| `rules/frontend/design.md` | Premium/distinctive frontend principles — anti-generic-AI aesthetics, motion/3D/tokens/responsive/accessibility/performance as design, not an afterthought. Stack-agnostic. |
 | `rules/frontend/react.md` | React conventions — composition, state, effects, accessibility. |
 
 ### Install rules
@@ -235,7 +237,7 @@ That creates (or, if one already exists, appends to) the project's `CLAUDE.md` w
 <!-- ai-toolkit-max:rules:end -->
 ```
 
-The seven `core/` rules are always included. `backend/python.md` or `frontend/react.md` are added automatically only when the project looks like it needs them (a `requirements.txt`/`pyproject.toml`/`*.py`, or a `package.json` depending on `react`) — nothing is forced. Content outside the markers is never touched, and re-running is idempotent: it regenerates the block in place rather than duplicating it.
+The seven `core/` rules are always included. `backend/python.md` is added automatically when the project looks like it needs it (a `requirements.txt`/`pyproject.toml`/`*.py`); `frontend/design.md` is added whenever a `package.json` exists at all, and `frontend/react.md` on top of it specifically when that `package.json` depends on `react` — nothing is forced. Content outside the markers is never touched, and re-running is idempotent: it regenerates the block in place rather than duplicating it.
 
 Claude Code may show a one-time prompt the first time a session loads a project with these imports, since the paths point outside the project — that's expected, approve it once.
 
@@ -299,6 +301,7 @@ skills/
   reconcile/SKILL.md
   test/SKILL.md
   review/SKILL.md
+  design-review/SKILL.md
   debug/SKILL.md
   short/SKILL.md
   audit/SKILL.md
@@ -314,6 +317,7 @@ rules/
   backend/
     python.md
   frontend/
+    design.md
     react.md
 ```
 
