@@ -20,7 +20,7 @@ setup_project() {
   log_step "Configuring project: $project"
 
   local claude_md="$project/CLAUDE.md"
-  local core_rules="core/engineering.md core/architecture.md core/quality.md core/security.md core/execution-state.md core/capabilities.md"
+  local core_rules="core/engineering.md core/architecture.md core/quality.md core/security.md core/execution-state.md core/task-context.md core/capabilities.md"
 
   local block="$CLAUDE_MD_MARK_START"
   block="${block}
