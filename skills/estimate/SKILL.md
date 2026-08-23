@@ -12,7 +12,7 @@ Two modes, chosen from the input:
 
 ## Rules
 
-- Take the existing plan as primary input — `.ai/plan.md` if present, otherwise the plan already produced in this conversation. Don't re-derive requirements or approach `/plan` already settled. Read the plan's acceptance criteria along with it — they drive decomposition, not just the Changes list.
+- Take the existing plan as primary input — the task's Task Context file if present, otherwise the plan already produced in this conversation. Don't re-derive requirements or approach `/plan` already settled. Read the file's acceptance criteria along with it — they drive decomposition, not just the Changes list.
 - Decompose into the minimum reasonable number of slices. A slice is a meaningful, independently verifiable unit of work, not a coding step — do not list file-by-file implementation actions unless one is needed to mark a slice boundary. Prefer slices that each move one or more acceptance criteria toward verified, over slices organized by implementation layer (e.g. "models", "services", "tests" as separate slices).
 - Do not create artificial micro-slices. A small, well-understood plan can be a single slice — don't force decomposition.
 - Every acceptance criterion from the plan should be covered by at least one slice's `Covers:`. Flag any criterion with no covering slice instead of silently leaving it unaddressed.
@@ -24,7 +24,7 @@ Two modes, chosen from the input:
 - Expose the assumptions and unknowns each estimate depends on.
 - State each slice's verification criteria concretely enough for `/verify` to check against — not a restatement of the goal. Refine the plan's method/level (e.g. "integration test") into the concrete check this slice must pass where that's already knowable; leave it at method/level otherwise.
 - Do not fabricate historical data. If none exists, say so instead of inventing it.
-- Do not modify files, except: writing the slice map into `.ai/plan.md`'s Slices section when `.ai/` is in use; initializing the task's block in `.ai/state.md` (state `READY`, current slice 1/total, each of the plan's acceptance criteria set to `NOT_VERIFIED`) the first time a slice map is created for it; and appending the post-work Record into that task's block in `.ai/state.md` — see `rules/core/execution-state.md`.
+- Do not modify files, except the task's Task Context file: writing the slice map into its `Slices` section; initializing `status: READY`, current slice 1/total, and each acceptance criterion's `Result: NOT_VERIFIED` the first time a slice map is created for it; and appending the post-work Record into its `Execution History` — see `rules/core/execution-state.md` and `rules/core/task-context.md`.
 
 ## Output — pre-work
 
@@ -61,4 +61,4 @@ Variance: <direction/magnitude>
 Driver: <what caused the difference, one line>
 ```
 
-Keep this structured and terse — it's meant to be reusable as historical estimation data later, not prose. When `.ai/state.md` exists, append this record under the task's block.
+Keep this structured and terse — it's meant to be reusable as historical estimation data later, not prose. When the task has a Task Context file, append this record under its `Execution History`.
