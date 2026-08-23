@@ -77,6 +77,86 @@ A Human Gate is never a new state value — it's always the existing `BLOCKED` s
 
 Track repeated attempts at the same phase via `Execution History`. If the same phase fails with the same failure signature (same test, same error, same diff shape) for `max_verify_iterations` consecutive attempts (`.ai/config`'s `max_verify_iterations` key if set, default 3), stop rather than retrying again hoping for a different result — report what was attempted, how many times, why it isn't progressing, and the specific human decision needed. This is a `BLOCKED` outcome, not a silent failure or an infinite retry.
 
+## Supervisor decision model
+
+This is the canonical description of how `skills/execute/SKILL.md` actually decides what happens next — the real implementation, not an idealized one. It replaces "pick a phase chain once, then walk it" with re-evaluating at every phase boundary, across the whole lifecycle (THINK phases and the EXECUTE loop alike) rather than only the post-plan portion.
+
+### Inputs
+
+At every boundary, the decision reads — never assumes — from the task file plus the repo:
+
+1. Current phase and status (frontmatter).
+2. Business requirements (Objective, Business Context — human-controlled, never inferred).
+3. Acceptance Criteria — both axes (`Requirement:`, `Result:`), per criterion.
+4. What's actually persisted for the current phase (see Phase completion below) versus what's still only in conversation.
+5. Test strategy (Test Strategy section, if set).
+6. Existing evidence (`Evidence:`/`Verified at:` on each criterion, plus Execution History entries).
+7. Human-authored context since the last decision — Human Overrides, and anything said in this conversation since the last boundary. This always takes precedence over the direction a previous decision was heading in; a mid-run correction changes the next action, it never queues behind a stale one.
+8. Blockers (open or resolved).
+9. Repository state (git diff, test results — ground truth over the file, per Principles below).
+10. Execution History (for loop detection — same phase, same failure signature, repeated).
+11. Slice map, if one exists (for the EXECUTE loop specifically — `/next`'s own state definitions apply unchanged here).
+
+### Decision
+
+Apply `/classify`'s own assessment dimensions (complexity, uncertainty, risk, blast radius, UI-facing-ness, significance) to the *current state* above — not the original raw request, and not a repeated invocation of `/classify` itself — to answer one question: **given where this task actually is right now, what is the smallest correct next action that moves it toward `COMPLETE`?** The answer is always exactly one of:
+
+| Decision | When | Typical action |
+|---|---|---|
+| **EXECUTE** | Next action is obvious, low-risk, ACs unchanged since last approved | Run exactly one phase/skill, then re-decide |
+| **ASK_HUMAN** | One of the four Human Gates trips (Requirements / Creative Approval / High-risk action / Final review — see Autonomy above) | Stop, present per that gate's format, wait |
+| **RETRY** | Verification (code or visual) is `RECOVERABLE` | Route through `/debug` (code) or a fix (visual), then re-verify, then re-decide |
+| **REPLAN** | `REPLAN_REQUIRED` — an assumption broke, an AC changed, scope turned out different | Stop, re-enter via `/plan` → `/estimate`, report why |
+| **STOP** | External `BLOCKED`, or the same phase/failure signature repeated `max_verify_iterations` times | Persist the blocker, ask the human |
+| **COMPLETE** | Every AC `VERIFIED`, `/review` clean, `/design-review` clean if applicable, no unresolved blockers | Report `COMPLETE` |
+
+No phase list is ever precomputed and walked. `EXECUTE` names exactly one next phase or action — never more than one — and the decision is made again immediately after it completes.
+
+### Phase completion
+
+A phase counts as complete only once its output is actually persisted in the task file — never on "the response covered it." Ownership is unchanged from the existing schema (`rules/core/task-context.md`); this just states what "done" means per phase:
+
+| Phase | Persisted as | Owned by |
+|---|---|---|
+| `clarify` | Acceptance Criteria, Edge Cases, Test Strategy | `/clarify` |
+| `design` | `## Design Context` pointer, Decisions | `/design` |
+| `creative-explore` | Decisions (recommendation + rejected concepts + approval status) | `/creative-explore` |
+| `plan` | Technical Plan, finalized Acceptance Criteria | `/plan` |
+| `estimate` | Slices | `/estimate` |
+| `implement` | Code (not in the task file) + a Progress/Execution History entry | normal work |
+| `verify` | Per-criterion `Result`/`Evidence`/`Verified at` | `/verify` |
+| `design-review` | An Execution History entry (pass/fail + one-line reason) — `design-review` itself is read-only per its own rules and writes nothing, so `/execute` is what checkpoints its outcome | `/execute`, on `design-review`'s behalf |
+| `review` | An Execution History entry (clean, or open findings) | `/execute`, on `review`'s behalf |
+
+### Visual loop, made explicit
+
+For a UI-facing task, `implement` and `verify` are not the whole story — this loop runs alongside/after them and is subject to the same loop-detection cap:
+
+```
+implement → design-review → PASS → continue (next slice, or Final review)
+                          → FAIL → fix → design-review (again)
+```
+
+Each `design-review` outcome is persisted per Phase completion above before the next decision is made — the loop's state lives in the task file, not only in `design-review`'s own (unpersisted) output.
+
+### Unified transition diagram
+
+```
+LOAD + RECONCILE task file (ground truth: repo > file)
+        ↓
+SUPERVISOR DECISION (Inputs above → EXECUTE|ASK_HUMAN|RETRY|REPLAN|STOP|COMPLETE)
+        ↓
+   EXECUTE one phase/action (THINK: clarify/design/creative-explore/plan/estimate,
+                              or EXECUTE: /next's own READY→implement→VERIFYING loop,
+                              or QUALITY: design-review/review)
+        ↓
+   PERSIST its output (Phase completion above) + Execution History checkpoint
+        ↓
+SUPERVISOR DECISION again ← (loop back — nothing here assumes what comes next)
+```
+
+This is one decision loop, not two layers with different rigor — the THINK phases and the post-plan EXECUTE loop (`/next`'s own `READY → VERIFYING → RECOVERABLE/REPLAN_REQUIRED/COMPLETE` machine, unchanged) both go through the same Supervisor Decision at their boundaries now.
+
 ## Principles
 
 - Create `.ai/` lazily — a task that doesn't need multi-slice tracking doesn't get one, and doesn't get a `TASK-NNN` id.
