@@ -1,6 +1,6 @@
 # Execution State
 
-Some tasks are large enough to need a persisted execution state across sessions and slices. When that's the case, keep it in `.ai/` at the project root.
+Some tasks are large enough to need a persisted execution state across sessions and slices. When that's the case, each task gets one file — `.ai/tasks/TASK-NNN.md` by default, or wherever `TASK_CONTEXT_ROOT` resolves to (see `rules/core/task-context.md` for the full document contract: schema, human/AI ownership, reconciliation, staleness). This file is that state — human-editable in Obsidian or any text editor, git-diffable, and the single source of truth for the task's position.
 
 ## Tasks
 
@@ -8,50 +8,26 @@ A task that gets a persisted plan gets a stable id: `TASK-001`, `TASK-002`, … 
 
 A task is **active** if its state isn't `COMPLETE`. `/next` and `/status` operate on a task by id (`/next TASK-003`, `/status TASK-003`); without one, `/next` uses the single active task if there's exactly one, asks if there are several, and says so if there are none — never guesses.
 
-`.ai/state.md` is the single source of truth for a task's current position. `.ai/plan.md` holds the destination, slice map, and acceptance criteria; `.ai/decisions.md` holds the reasoning behind decisions. Neither duplicates what's in `.ai/state.md` — they're referenced from it, not repeated.
+The task file is the single source of truth for a task's current position, destination, slice map, acceptance criteria, and decisions — see `rules/core/task-context.md` for the full schema.
 
 ## Acceptance criteria
 
 Every task with a persisted plan carries an Acceptance Contract: the criteria that define "done," drafted by `/clarify` and finalized by `/plan` — see `skills/clarify/SKILL.md` and `skills/plan/SKILL.md`. This is what task completion is actually derived from, not slice count, lines changed, or agent confidence.
 
-Each criterion (`AC-NNN`) has two independent axes, tracked in different files because they change at different times and are owned by different skills:
+Each criterion (`AC-NNN`) has two independent axes, tracked as two separate fields on the same criterion because they change at different times and are owned by different skills:
 
-- **Requirement status** — `CONFIRMED` / `INFERRED` / `UNKNOWN`. Whether the criterion is actually agreed, not just guessed. Lives in `.ai/plan.md`, owned by `/plan` (from `/clarify`'s draft). An `INFERRED` criterion never silently becomes `CONFIRMED` just because implementation proceeds. An `UNKNOWN` criterion that would block safe implementation keeps the task from reaching "Ready to implement" (pre-`.ai/`) or moves it to `BLOCKED` (mid-execution) until `/clarify` resolves it — never implemented on a guessed default.
-- **Verification status** — `VERIFIED` / `FAILED` / `BLOCKED` / `NOT_VERIFIED`. Whether there's evidence the behavior actually works. Lives in `.ai/state.md`, owned by `/verify`, initialized `NOT_VERIFIED` by `/estimate`. `VERIFIED` requires evidence — a concrete check that was actually run or inspected, never "the implementation looks correct."
+- **Requirement status** (`Requirement:`) — `CONFIRMED` / `INFERRED` / `UNKNOWN`. Whether the criterion is actually agreed, not just guessed. Owned by `/plan` (from `/clarify`'s draft). An `INFERRED` criterion never silently becomes `CONFIRMED` just because implementation proceeds. An `UNKNOWN` criterion that would block safe implementation keeps the task from reaching "Ready to implement" (pre-`.ai/`) or moves it to `BLOCKED` (mid-execution) until `/clarify` resolves it — never implemented on a guessed default.
+- **Verification status** (`Result:`) — `VERIFIED` / `FAILED` / `BLOCKED` / `NOT_VERIFIED` / `STALE`. Whether there's evidence the behavior actually works, and whether that evidence is still current. Owned by `/verify`, initialized `NOT_VERIFIED` by `/estimate`; `/reconcile` may flip a `VERIFIED` result to `STALE` (see `rules/core/task-context.md`). `VERIFIED` requires evidence — a concrete check that was actually run or inspected, never "the implementation looks correct."
 
 There is deliberately no third, separately-tracked "implementation status" per criterion — that's exactly what the slice's own `READY`/`EXECUTING`/`VERIFYING` position already tracks (see Execution loop below). Adding a parallel field would duplicate state that already exists; a criterion's implementation progress is read off the slice(s) that cover it.
 
 A criterion's verification method/level (unit, integration, e2e, contract, performance, security, static analysis, migration, manual, exploratory, or other — chosen by what can actually prove the criterion, not a fixed default) is decided in `/clarify`/`/plan` as a category and refined into concrete checks by `/estimate`/`/verify`. A criterion may also carry an optional capability hint (e.g. Playwright, Sentry) naming the external system that most naturally supplies that evidence — advisory only, per `rules/core/capabilities.md`; `/verify` never blocks on a missing hinted capability while an adequate local alternative exists.
 
-## Files
+## The task file
 
-### `.ai/plan.md`
-The destination — what needs to be done. Each task's plan starts with `Task: TASK-NNN — <title>`, followed by its acceptance criteria (`AC-NNN`: description, requirement status, verification method/level, optional capability hint — see Acceptance criteria above). Written by `/plan`; extended by `/estimate` with that task's initial slice map (short slice id like `S1`, goal, scope, dependencies, the acceptance criterion/criteria it covers, estimate, verification criteria — see `skills/estimate/SKILL.md`). `/next` may reorder, split, merge, or annotate slices as execution surfaces new information, but doesn't originate the map or rewrite the acceptance criteria — a criterion changing is a `/plan` event (see REPLAN_REQUIRED below).
+`.ai/tasks/TASK-NNN.md` (or the resolved `TASK_CONTEXT_ROOT` location) holds everything for one task: acceptance criteria (id, description, requirement status, verification method/level, capability hint, result, evidence — see `rules/core/task-context.md`), the slice map, current state, blockers, decisions, and human-authored context. Nothing about a task lives in a second, separately-synced file — `/plan`, `/estimate`, `/next`, and `/verify` all read and write the same file, each owning a different section of it (see the ownership matrix in `rules/core/task-context.md`).
 
-### `.ai/state.md`
-The current position of every task, one block per task, using `/next`'s canonical states: `READY`, `EXECUTING`, `VERIFYING`, `BLOCKED`, `RECOVERABLE`, `REPLAN_REQUIRED`, or `COMPLETE` (see `skills/next/SKILL.md`), plus each acceptance criterion's verification status. Owned by `/next` and `/verify`, initialized by `/estimate`; overwritten in place per task, not appended. `EXECUTING` is advisory only — a stale `EXECUTING` marker from an interrupted session is re-derived from the repo, never trusted outright.
-
-Per task:
-```
-## TASK-NNN — <title>
-State: <state>
-Slice: <n>/<total> — <slice id/name>
-Objective: <current objective — omit if same as slice goal>
-Last action: <what was just done>
-Next: <what happens next>
-Blocked: <reason, or omit/"no">
-Acceptance:
-  AC-001: VERIFIED — <evidence, one line>
-  AC-002: NOT_VERIFIED
-  (one line per criterion; FAILED/BLOCKED carry a one-line reason the same way VERIFIED carries evidence)
-Plan: .ai/plan.md
-Decisions: <relevant .ai/decisions.md entries — omit if none>
-Updated: <date>
-```
-Keep one block per task; don't grow it into a log. Post-work estimate Records (see `skills/estimate/SKILL.md`) append tersely under the relevant task's block.
-
-### `.ai/decisions.md`
-Meaningful architectural/implementation decisions the agent shouldn't have to rediscover. Append-only. Not a diary — only decisions that would otherwise get re-litigated or re-derived. Tag each entry with its task id (`TASK-NNN: ...`) once more than one task is active, so `state.md` can reference it.
+Overwritten in place per section, not appended — except `Execution History`, which accumulates terse checkpoints (not a prose log) and should be trimmed/archived rather than left to grow unbounded.
 
 ## Execution loop
 
@@ -84,15 +60,15 @@ Next: <next slice/action>
 
 ## Autonomy
 
-Keep moving through the loop above without asking when the next action is obvious, the change is low-risk, the task's acceptance criteria in `.ai/plan.md` are unchanged from what was last approved, and verification passes — this includes RECOVERABLE failures, which route through `/debug` → `/verify` automatically.
+Keep moving through the loop above without asking when the next action is obvious, the change is low-risk, the task's acceptance criteria in the task file are unchanged from what was last approved, and verification passes — this includes RECOVERABLE failures, which route through `/debug` → `/verify` automatically.
 
 Stop and ask the user when: the state is REPLAN_REQUIRED (an architectural decision is required, requirements or an acceptance criterion changed, or a significant unexpected dependency surfaces), the state is BLOCKED (missing credentials, tool/external access, infrastructure, or a decision only the user can make — including an `UNKNOWN` acceptance criterion that blocks safe implementation), or continuing would require guessing business intent. Never silently change the approved plan or an acceptance criterion's requirement status, skip verification, mark a criterion VERIFIED without evidence, mark a failed slice complete, or invent access that doesn't exist — when a situation is ambiguous, stop with a concise explanation instead of assuming.
 
 ## Principles
 
 - Create `.ai/` lazily — a task that doesn't need multi-slice tracking doesn't get one, and doesn't get a `TASK-NNN` id.
-- State is advisory. The repository (git diff, test output, actual file contents) is always ground truth. If `state.md` claims something the repo contradicts, trust the repo and flag the mismatch.
+- State is advisory. The repository (git diff, test output, actual file contents) is always ground truth. If the task file claims something the repo contradicts, trust the repo and flag the mismatch.
 - Progress is defined by acceptance criteria, not proxies. Never infer that a task is done from code volume, files touched, subtasks/slices completed, or agent confidence — only from criteria marked `VERIFIED` with evidence.
-- `/next`, `/verify`, `/plan`, and `/estimate` may write only inside `.ai/` — never source code, configs, or any other project file. Implementing the change itself is normal work, not something these skills do.
+- `/task`, `/clarify`, `/plan`, `/estimate`, `/next`, `/verify`, `/reconcile`, and `/debug` (only for a durable edge case/decision) may write only inside `.ai/` (or the resolved `TASK_CONTEXT_ROOT`) — never source code, configs, or any other project file. Implementing the change itself is normal work, not something these skills do.
 - Keep entries terse and structured, not prose logs. Record only what materially helps a fresh session resume without replaying the conversation.
 - Commit `.ai/` to the project's own repository by default — that's what lets a new session or a teammate resume without reconstructing context.
