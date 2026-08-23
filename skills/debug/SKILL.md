@@ -17,6 +17,7 @@ Investigate the current problem systematically.
 - Do not modify files until the root cause is reasonably understood.
 - Avoid speculative fixes.
 - Consider related edge cases and regression risks.
+- If the root cause reveals a new edge case or a decision worth not rediscovering (not just "how this particular bug was fixed"), persist it into the task's Task Context file's `Edge Cases`/`Decisions` section — reconcile first (re-read the file fresh). Don't log the investigation itself; only the durable fact.
 - Keep the investigation proportional to the problem.
 
 ## Output
