@@ -12,15 +12,15 @@ A reusable engineering toolkit for Claude Code, split into two layers:
           │                                 │
         RULES                            SKILLS
           │                                 │
-   ┌──────┼──────┐          THINK:    clarify · design · plan · impact · estimate · challenge
-   ↓      ↓      ↓          EXECUTE:  next · verify   (implementing itself is native)
+   ┌──────┼──────┐          THINK:    task · clarify · design · plan · impact · estimate · challenge
+   ↓      ↓      ↓          EXECUTE:  next · verify · reconcile   (implementing itself is native)
  core  backend frontend     QUALITY:  test · review · short
 ```
 
 - **Rules** answer *how I should engineer* — always-on principles you pull into a project's `CLAUDE.md`.
 - **Skills** answer *what process should I run now* — on-demand workflows you invoke with `/clarify`, `/plan`, etc.
 
-Process depth is meant to scale with the task. `classify` is the entry point: it looks at the task and recommends the minimum chain needed — a trivial change is just `implement → verify`; a risky or ambiguous one pulls in `clarify → plan → estimate → impact/challenge → next → implement → verify → review`; a UI-facing one inserts `design` between `clarify` and `plan`. See `rules/core/engineering.md`. There's no skill for "implement" — writing the code is Claude's normal behavior, not a separate mode.
+Process depth is meant to scale with the task. `classify` is the entry point: it looks at the task and recommends the minimum chain needed — a trivial change is just `implement → verify`; a risky or ambiguous one pulls in `clarify → plan → estimate → impact/challenge → next → implement → verify → review`; a UI-facing one inserts `design` between `clarify` and `plan`; resuming a task without conversation context inserts `reconcile` before `next`. See `rules/core/engineering.md`. There's no skill for "implement" — writing the code is Claude's normal behavior, not a separate mode.
 
 ## Installation
 
@@ -64,7 +64,7 @@ Both are idempotent — safe to re-run any time. Two more modes, documented belo
 
 ## Skills
 
-Fifteen skills, each a distinct mode of work rather than a fixed pipeline stage. None of them are mandatory gates — invoke only what the task warrants.
+Seventeen skills, each a distinct mode of work rather than a fixed pipeline stage. None of them are mandatory gates — invoke only what the task warrants.
 
 **ENTRY** — decide how much process the task deserves.
 
@@ -76,6 +76,7 @@ Fifteen skills, each a distinct mode of work rather than a fixed pipeline stage.
 
 | Skill | Use it when |
 |---|---|
+| `/task` | Starting a task outside `/clarify`/`/plan` — from a bare idea or an existing note. Creates or opens the task's Task Context file (`.ai/tasks/TASK-NNN.md` by default, or the configured Obsidian vault). |
 | `/clarify` | Before implementing anything ambiguous. Drafts an Acceptance Contract: candidate acceptance criteria classified CONFIRMED/INFERRED/UNKNOWN, their verification approach, and the questions needed to resolve what's open — the entry point for acceptance criteria in the workflow. |
 | `/design` | The task is UI-facing and no design context exists yet. Builds a disposable HTML/CSS/JS prototype, iterates on it with the user in-browser, and hands off an `APPROVED` prototype as `/plan`'s primary UI source — replacing a Figma lookup when no Figma file exists. |
 | `/plan` | Once requirements are clear. Produces a concise implementation plan anchored to `/clarify`'s acceptance criteria — every meaningful criterion mapped to a change and a test, flagged if it has neither. |
@@ -89,7 +90,8 @@ Fifteen skills, each a distinct mode of work rather than a fixed pipeline stage.
 |---|---|
 | `/next` | Deciding what to safely do next for a task (`/next` or `/next TASK-NNN`). The execution dispatcher: reads that task's plan, slice map, and state, and reports one canonical state — `READY`, `VERIFYING`, `BLOCKED`, `RECOVERABLE`, `REPLAN_REQUIRED`, or `COMPLETE` — routing automatically through verification/debug rather than making you orchestrate every step. `COMPLETE` means every acceptance criterion is verified, not just every slice touched. |
 | `/verify` | The primary mechanism proving a slice is actually done — not code quality, that's `/review`. Checks each acceptance criterion the slice covers with the method it calls for (unit/integration/e2e/performance/security/manual/…) and marks it `VERIFIED`/`FAILED`/`BLOCKED`/`NOT_VERIFIED` with evidence. Never claims `VERIFIED` without it. |
-| `/status` | Checking where things stand (`/status` or `/status TASK-NNN`) without changing anything. Reports one task's state and acceptance progress, or a compact list of all active tasks, straight from `.ai/state.md`. |
+| `/status` | Checking where things stand (`/status` or `/status TASK-NNN`) without changing anything. Reports one task's state and acceptance progress, or a compact list of all active tasks, straight from its Task Context file. |
+| `/reconcile` | Resuming a task without the conversation context that produced its current state, or suspecting drift. Compares the persisted Task Context against the repo/git/conversation — new or changed acceptance criteria, human overrides, stale verification evidence — and flips status or marks evidence `STALE` when material. |
 
 **QUALITY** — validate the result.
 
@@ -125,25 +127,27 @@ To remove it: `claude plugin uninstall ai-toolkit-max` and `claude plugin market
 
 ## Execution state
 
-For tasks big enough to need multi-slice tracking across sessions, a task gets a stable id (`TASK-001`, `TASK-002`, …) and persistent state in `.ai/` at the root of the project you're working in (not this toolkit repo):
+For tasks big enough to need multi-slice tracking across sessions, a task gets a stable id (`TASK-001`, `TASK-002`, …) and a persistent Task Context file — `.ai/tasks/TASK-NNN.md` at the root of the project you're working in by default, or wherever `TASK_CONTEXT_ROOT` resolves to (an external, possibly shared Obsidian vault — see `rules/core/task-context.md`):
 
 ```
 .ai/
-├── plan.md        # the destination — plan + acceptance criteria + slice map, written by /plan, sliced by /estimate
-├── state.md        # the current position of every task, incl. per-criterion verification status — one block per id, owned by /next + /verify
-└── decisions.md     # meaningful decisions worth not rediscovering, append-only, tagged by task id
+└── tasks/
+    ├── TASK-001.md   # everything for this task: acceptance criteria, slices, state, decisions, human context
+    └── TASK-002.md
 ```
 
 ```
-TASK ──▶ classify ──▶ clarify ──▶ plan+estimate ──▶ state ──▶ next ──▶ slice ──▶ verify ──▶ state ──▶ next ──▶ …
+TASK ──▶ classify ──▶ clarify ──▶ plan+estimate ──▶ task file ──▶ next ──▶ slice ──▶ verify ──▶ task file ──▶ next ──▶ …
 ```
 
-Created lazily — a task that doesn't need it never gets a `.ai/` folder or a `TASK-NNN` id. Full contract in `rules/core/execution-state.md`, in short:
+Created lazily — a task that doesn't need it never gets a task file or a `TASK-NNN` id. Full contract in `rules/core/execution-state.md` and `rules/core/task-context.md`, in short:
 
-- **Acceptance criteria drive everything.** `/clarify` drafts them (`AC-NNN`, classified `CONFIRMED`/`INFERRED`/`UNKNOWN`), `/plan` finalizes and persists them into `.ai/plan.md`, `/estimate` maps each slice to the criteria it covers, and `/verify` is what actually marks a criterion `VERIFIED` — with evidence, never on confidence alone. A task is `COMPLETE` when every criterion is `VERIFIED`, not when the code looks done. A criterion may also carry an optional capability hint (see [Capabilities](#capabilities) below) naming the MCP that most naturally supplies its evidence — advisory, never a blocker on its own.
-- `.ai/state.md` is the single source of truth for a task's position: state (`READY`/`EXECUTING`/`VERIFYING`/`BLOCKED`/`RECOVERABLE`/`REPLAN_REQUIRED`/`COMPLETE`), current slice, last action, next action, blockers, and each acceptance criterion's verification status (`VERIFIED`/`FAILED`/`BLOCKED`/`NOT_VERIFIED`) with its evidence. State is advisory; the repo (git diff, test output) is always ground truth.
-- Only `/next`, `/verify`, `/plan`, and `/estimate` write inside `.ai/`, and nowhere else — never source code, configs, or other project files.
-- Commit `.ai/` to the project's own repo by default, so a new session or a teammate can resume without replaying the conversation.
+- **Acceptance criteria drive everything.** `/clarify` drafts them (`AC-NNN`, classified `CONFIRMED`/`INFERRED`/`UNKNOWN`), `/plan` finalizes and persists them into the task file, `/estimate` maps each slice to the criteria it covers, and `/verify` is what actually marks a criterion `VERIFIED` — with evidence, never on confidence alone. A task is `COMPLETE` when every criterion is `VERIFIED` (never `STALE`, `NOT_VERIFIED`, or `FAILED`), not when the code looks done. A criterion may also carry an optional capability hint (see [Capabilities](#capabilities) below) naming the MCP that most naturally supplies its evidence — advisory, never a blocker on its own.
+- **One file per task is the single source of truth** for its position: status (`READY`/`EXECUTING`/`VERIFYING`/`BLOCKED`/`RECOVERABLE`/`REPLAN_REQUIRED`/`COMPLETE`), current slice, blockers, decisions, and each acceptance criterion's verification status (`VERIFIED`/`FAILED`/`BLOCKED`/`NOT_VERIFIED`/`STALE`) with its evidence — plus human-authored context (Objective, Business Context, Constraints, Human Overrides) in the same Obsidian-editable note. State is advisory; the repo (git diff, test output) is always ground truth.
+- **Human edits always win.** A human can open the file directly, change an acceptance criterion, add an edge case, or write a `Human Overrides` note — Claude reconciles against the file fresh before every major step and treats those edits as authoritative, never silently reverting them.
+- **Verification goes stale.** A `VERIFIED` result records the commit it was checked against; if relevant code changes afterward, `/reconcile` (or routine reconciliation before any major step) marks it `STALE` rather than leaving a falsely-current result in place.
+- Only `/task`, `/clarify`, `/plan`, `/estimate`, `/next`, `/verify`, `/reconcile`, and `/debug` (only for a durable edge case/decision) write inside a task file, and nowhere else — never source code, configs, or other project files.
+- Commit `.ai/tasks/` to the project's own repo by default (or to the external vault's own repo, if `TASK_CONTEXT_ROOT` points at one), so a new session or a teammate can resume without replaying the conversation.
 
 Work through it mostly with `/next` and `go`:
 
@@ -200,7 +204,8 @@ Markdown principle sets, grouped so you only pull in what's relevant to the proj
 | `rules/core/architecture.md` | Layering, dependency inversion, DDD — applied only when complexity justifies it. |
 | `rules/core/quality.md` | Correctness, error handling, testing, observability. |
 | `rules/core/security.md` | Secrets, untrusted input, least privilege. |
-| `rules/core/execution-state.md` | The `.ai/` contract — what `plan.md`/`state.md`/`decisions.md` mean, who writes what, and that state is advisory. |
+| `rules/core/execution-state.md` | The `.ai/` contract — the task file's location, the acceptance-criteria axes, the state machine, and that state is advisory. |
+| `rules/core/task-context.md` | The Task Context document contract — schema, human/AI ownership, reconciliation, staleness, `TASK_CONTEXT_ROOT` resolution. |
 | `rules/core/capabilities.md` | How to treat MCPs: minimum-capability selection, the registry of which MCP serves which skill, and default permission levels. |
 | `rules/backend/python.md` | Python/FastAPI conventions — typing, async, thin routes, Pydantic. |
 | `rules/frontend/react.md` | React conventions — composition, state, effects, accessibility. |
@@ -225,11 +230,12 @@ That creates (or, if one already exists, appends to) the project's `CLAUDE.md` w
 @/absolute/path/to/ai-toolkit-max/rules/core/quality.md
 @/absolute/path/to/ai-toolkit-max/rules/core/security.md
 @/absolute/path/to/ai-toolkit-max/rules/core/execution-state.md
+@/absolute/path/to/ai-toolkit-max/rules/core/task-context.md
 @/absolute/path/to/ai-toolkit-max/rules/core/capabilities.md
 <!-- ai-toolkit-max:rules:end -->
 ```
 
-The six `core/` rules are always included. `backend/python.md` or `frontend/react.md` are added automatically only when the project looks like it needs them (a `requirements.txt`/`pyproject.toml`/`*.py`, or a `package.json` depending on `react`) — nothing is forced. Content outside the markers is never touched, and re-running is idempotent: it regenerates the block in place rather than duplicating it.
+The seven `core/` rules are always included. `backend/python.md` or `frontend/react.md` are added automatically only when the project looks like it needs them (a `requirements.txt`/`pyproject.toml`/`*.py`, or a `package.json` depending on `react`) — nothing is forced. Content outside the markers is never touched, and re-running is idempotent: it regenerates the block in place rather than duplicating it.
 
 Claude Code may show a one-time prompt the first time a session loads a project with these imports, since the paths point outside the project — that's expected, approve it once.
 
@@ -280,6 +286,7 @@ tests/
   test_install.sh          # black-box tests, isolated from your real environment
 skills/
   classify/SKILL.md
+  task/SKILL.md
   clarify/SKILL.md
   design/SKILL.md
   plan/SKILL.md
@@ -289,6 +296,7 @@ skills/
   next/SKILL.md
   verify/SKILL.md
   status/SKILL.md
+  reconcile/SKILL.md
   test/SKILL.md
   review/SKILL.md
   debug/SKILL.md
@@ -301,6 +309,7 @@ rules/
     quality.md
     security.md
     execution-state.md
+    task-context.md
     capabilities.md
   backend/
     python.md
