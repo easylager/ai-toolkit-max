@@ -5,15 +5,15 @@ description: Read-only report of one task's execution state (`/status TASK-NNN`)
 
 # Status
 
-Report execution state exactly as recorded in `.ai/state.md`. Never modify anything, never invent state.
+Report execution state exactly as recorded in each task's Task Context file. Never modify anything, never invent state.
 
 ## Rules
 
 - Read-only. Do not modify any file.
-- Read from `.ai/state.md` (and `.ai/plan.md` only for a title/slice name it doesn't already have). See `rules/core/execution-state.md`.
-- If `.ai/` doesn't exist, or has no tasks, say so plainly — don't infer or fabricate a task.
-- Report only what's actually recorded. Never guess at a blocker, slice count, or next action that isn't in state.
-- Given `/status TASK-NNN` for an id that isn't in `.ai/state.md`, say so — don't invent one.
+- Read from the task file(s) under the resolved `TASK_CONTEXT_ROOT` (per `rules/core/task-context.md`) — one task with `/status TASK-NNN`, all of them for a bare `/status` (glob for `TASK-*.md`, read each frontmatter). See `rules/core/execution-state.md`.
+- If the resolved task root doesn't exist, or has no tasks, say so plainly — don't infer or fabricate a task.
+- Report only what's actually recorded. Never guess at a blocker, slice count, or next action that isn't in the file.
+- Given `/status TASK-NNN` for an id with no matching task file, say so — don't invent one.
 - Keep output minimal — this is a status check, not an analysis.
 
 ## Output
