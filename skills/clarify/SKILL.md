@@ -5,12 +5,11 @@ description: Turn a business request into a draft Acceptance Contract — candid
 
 # Clarify
 
-Turn the current business request into a draft Acceptance Contract: candidate acceptance criteria, their status, and the questions needed to resolve what's still open. This is the entry point for acceptance criteria in the workflow — `/plan` later promotes this draft into `.ai/plan.md`.
+Turn the current business request into a draft Acceptance Contract: candidate acceptance criteria, their status, and the questions needed to resolve what's still open. This is the entry point for acceptance criteria in the workflow — `/plan` later promotes this draft into the task's Task Context file.
 
 ## Rules
 
-- Do not modify files.
-- Do not write implementation code.
+- The only file this may create or update is the current task's Task Context file (`rules/core/task-context.md`) — create it (allocating `TASK-NNN`, same allocation rule `/plan` uses) once clarification is worth persisting, or update its `Objective`/`Scope`/`Acceptance Criteria`/`Edge Cases`/`Assumptions`/`Open Questions` if it already exists. Reconcile first: re-read the file fresh and note any human edits before adding to it. Never write implementation code or any other file.
 - Do not invent business requirements — an inferred criterion is a hypothesis to confirm, never a decision.
 - Use the existing repository context when relevant.
 - If an external system plausibly holds the authoritative requirement (a Linear/Jira/GitHub issue, a Notion spec) and is available in this session, retrieve it before drafting criteria or questions — see `rules/core/capabilities.md`. Never invent access to a system that isn't configured; if the likely source is unavailable, say so only if it materially affects confidence in the draft.
