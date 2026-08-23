@@ -29,7 +29,7 @@ Assess the task and recommend the minimum workflow depth needed to handle it saf
 One line per material dimension: `<Dimension>: <Trivial/Low/Medium/High>`, with a short reason only if non-obvious. Omit dimensions that don't apply.
 
 ### Recommended workflow
-A single chain, left to right in execution order, using only the skill names above and/or `implement`.
+A single chain, left to right in execution order, using only the skill names above and/or `implement`. Note that `/execute` (optionally `/execute TASK-NNN`) runs this chain automatically, phase by phase, stopping only at a Human Gate or blocker — mention it as the automatic-run option, not as a chain member itself.
 
 ### Potential capabilities
 Only if the task plausibly needs something beyond the local filesystem. Omit otherwise.

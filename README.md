@@ -8,6 +8,8 @@ A reusable engineering toolkit for Claude Code, split into two layers:
                       classify
                 (picks workflow depth)
                           │
+                execute (runs it automatically)
+                          │
           ┌───────────────┴────────────────┐
           │                                 │
         RULES                            SKILLS
@@ -21,6 +23,8 @@ A reusable engineering toolkit for Claude Code, split into two layers:
 - **Skills** answer *what process should I run now* — on-demand workflows you invoke with `/clarify`, `/plan`, etc.
 
 Process depth is meant to scale with the task. `classify` is the entry point: it looks at the task and recommends the minimum chain needed — a trivial change is just `implement → verify`; a risky or ambiguous one pulls in `clarify → plan → estimate → impact/challenge → next → implement → verify → review`; a UI-facing one inserts `design` between `clarify` and `plan`, and `design-review` between `implement` and `verify`; a significant visual project (a new major page, a new product surface) additionally inserts `creative-explore` between `design` and `plan` to generate and evaluate several genuinely different concepts before committing to one; resuming a task without conversation context inserts `reconcile` before `next`. See `rules/core/engineering.md`. There's no skill for "implement" — writing the code is Claude's normal behavior, not a separate mode.
+
+`execute` (optionally `execute TASK-NNN`) runs that decided chain automatically, phase by phase, within one invocation — instead of you invoking each skill by hand — stopping only at one of four Human Gates (Requirements, Creative Approval, a high-risk action, or Final review), a blocker, a loop-detection limit, or `COMPLETE`. It's a driver for the chain, not a replacement for the skills in it — invoke them individually any time you want manual control instead.
 
 ## Installation
 
@@ -64,13 +68,19 @@ Both are idempotent — safe to re-run any time. Two more modes, documented belo
 
 ## Skills
 
-Nineteen skills, each a distinct mode of work rather than a fixed pipeline stage. None of them are mandatory gates — invoke only what the task warrants.
+Twenty skills, each a distinct mode of work rather than a fixed pipeline stage. None of them are mandatory gates — invoke only what the task warrants.
 
 **ENTRY** — decide how much process the task deserves.
 
 | Skill | Use it when |
 |---|---|
 | `/classify` | At the start of any non-trivial task. Assesses complexity, risk, blast radius, and related dimensions, then recommends the minimum workflow chain — which skills to run, in what order. Doesn't clarify, plan, implement, or review itself. |
+
+**AUTOMATE** — run the decided chain without invoking each skill by hand.
+
+| Skill | Use it when |
+|---|---|
+| `/execute` | You want the recommended chain to run itself (`/execute` or `/execute TASK-NNN` to resume). Chains `/clarify` → `/design`/`/creative-explore` → `/plan` → `/estimate` → the execution loop → `/design-review` → `/review` within one invocation, checkpointing after every phase, stopping only at a Human Gate (Requirements, Creative Approval, a high-risk action, Final review), a blocker, a loop-detection limit, or `COMPLETE`. Runs autonomously within an invocation, not as an unattended background process — resuming after a closed session means re-invoking it. |
 
 **THINK** — understand and reason about the problem, before code changes.
 
@@ -289,6 +299,7 @@ tests/
   test_install.sh          # black-box tests, isolated from your real environment
 skills/
   classify/SKILL.md
+  execute/SKILL.md
   task/SKILL.md
   clarify/SKILL.md
   design/SKILL.md
