@@ -25,6 +25,7 @@ status: READY | EXECUTING | VERIFYING | BLOCKED | RECOVERABLE | REPLAN_REQUIRED 
 phase: clarify | design | creative-explore | plan | estimate | implement | verify | design-review | review
 priority: <optional, human-set>
 creative_autonomy: HIGH | MEDIUM | LOW <optional, human-set, default HIGH — see rules/frontend/design.md and skills/creative-explore/SKILL.md>
+execution_mode: MANUAL | SUPERVISED | AUTONOMOUS <optional, human-set — unset behaves exactly as before this field existed (AUTONOMOUS); see rules/core/execution-state.md's Execution mode section and skills/execute/SKILL.md>
 created_at: <date>
 updated_at: <date>
 branch: <optional>
@@ -96,7 +97,7 @@ Per-criterion `Evidence`/`Verified at` is the only evidence store — there is d
 
 ## Ownership
 
-- **Human-controlled** — Claude proposes only when explicitly asked, never silently overwrites: `title`, `priority`, `creative_autonomy`, Objective, Business Context, Constraints, Human Overrides.
+- **Human-controlled** — Claude proposes only when explicitly asked, never silently overwrites: `title`, `priority`, `creative_autonomy`, `execution_mode`, Objective, Business Context, Constraints, Human Overrides.
 - **Shared** — Claude proposes, a human edit is authoritative: Acceptance Criteria, Edge Cases, Decisions, Test Strategy, Assumptions, Scope, Open Questions.
 - **AI-managed** — Claude writes; a human can still hand-edit (e.g. to unblock): `status`, `phase`, Slices, Progress, Blockers, Next Action, Execution History.
 
@@ -108,7 +109,7 @@ Before acting, re-read the task file fresh off disk — never rely on what the c
 
 ## Reconciliation
 
-Every skill that touches the task file reconciles first: re-read it fresh, compare against the current conversation's understanding, and look for new/changed Acceptance Criteria, new Edge Cases, changed Constraints, new Human Overrides, changed Test Strategy, or new Blockers. Material drift routes the task to `BLOCKED` or `REPLAN_REQUIRED` — the same states `rules/core/execution-state.md` already defines, never a new one. Do this at minimum before `/plan`, before starting a slice's implementation, before `/verify`, before `/review`, and whenever a session resumes a task without the conversation history that produced its current state.
+Every skill that touches the task file reconciles first — see `rules/core/common-rules.md`. Load context per `rules/core/context-pack.md` for the current stage, not the full file unless needed.
 
 ## Staleness
 

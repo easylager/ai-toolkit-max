@@ -7,9 +7,21 @@ description: Create a concise implementation plan for the current feature, ancho
 
 Create an implementation plan for the current task, built around its Acceptance Contract rather than around code to write.
 
+## Workflow
+
+Planning is lightweight and targeted, not exhaustive:
+
+1. **Understand** the task and existing context (Task Context file, `/clarify` draft, or request itself).
+2. **Identify** the smallest set of files/components likely affected by the change.
+3. **Search targeted areas** for existing patterns, dependencies, and related code — using direct Bash/Read/Grep in the main agent's context only (no background/sub-agents spawned by default).
+4. **Inspect only relevant code** — avoid scanning whole repository or reading large unrelated files.
+5. **Identify risks and acceptance criteria coverage** — trace each criterion to a change or test.
+6. **Write the plan** and stop.
+
+Sub-agents/background-agents are **off by default**: only spawn one if the user explicitly requests it, or if the task genuinely requires independent investigation the main agent cannot reasonably do inline. When spawning, state why before doing so. Prefer the minimum (typically one agent, rarely more).
+
 ## Rules
 
-- Analyze the existing repository before proposing changes.
 - Reuse existing patterns and abstractions when appropriate.
 - Before finalizing Changes on a UI-facing task, check this conversation for an `APPROVED` `/design` prototype and use it as the primary UI source. If none exists, check whether an available external capability would materially reduce implementation uncertainty — design context (Figma), current library documentation (Context7), related PRs/issues (GitHub) — per `rules/core/capabilities.md`. Use it only if it changes what gets built; never invent access to one that isn't configured.
 - Take the task's Task Context file as the starting point when one exists (reconcile first — re-read it fresh, note any human edits per `rules/core/task-context.md`); otherwise take `/clarify`'s draft from this conversation; otherwise derive criteria directly from the request using the same CONFIRMED/INFERRED/UNKNOWN classification (see `skills/clarify/SKILL.md`).
@@ -17,6 +29,7 @@ Create an implementation plan for the current task, built around its Acceptance 
 - Every meaningful acceptance criterion must be traceable to at least one entry in Changes or Tests. Flag any criterion with no implementation or verification path instead of silently dropping it.
 - If an `UNKNOWN` criterion would block safe implementation, do not plan around a guessed default — say so and stop short of "Ready to implement" instead.
 - Do not modify files, except the task's Task Context file when persisting a multi-slice plan. The first time a task's plan is persisted, assign it the next sequential `TASK-NNN` id (per `rules/core/task-context.md`) and create its file with the acceptance criteria (id, description, requirement status, verification method/level, capability hint if any) plus `Technical Plan`/`Design Context`/`Test Strategy`; reuse the existing id and file, updating those same sections, when refining an already-persisted plan. See `rules/core/execution-state.md` and `rules/core/task-context.md`.
+- Append a `TASK_CREATED` `Execution History` event only if this call is what created the file (not if `/clarify` or `/task` already did). Either way, append `PHASE_STARTED | plan` at the start of this pass and `PHASE_COMPLETED | plan` once the plan is actually persisted (`rules/core/execution-state.md`'s Execution History format).
 - Do not write implementation code.
 - Avoid unnecessary architecture and dependencies.
 - Prefer the smallest design that satisfies the requirements.

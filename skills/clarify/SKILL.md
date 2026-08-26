@@ -10,6 +10,7 @@ Turn the current business request into a draft Acceptance Contract: candidate ac
 ## Rules
 
 - The only file this may create or update is the current task's Task Context file (`rules/core/task-context.md`) — create it (allocating `TASK-NNN`, same allocation rule `/plan` uses) once clarification is worth persisting, or update its `Objective`/`Scope`/`Acceptance Criteria`/`Edge Cases`/`Assumptions`/`Open Questions` if it already exists. Reconcile first: re-read the file fresh and note any human edits before adding to it. Never write implementation code or any other file.
+- When creating the task file, append a `TASK_CREATED` `Execution History` event; either way, append `PHASE_STARTED` at the start of this pass and `PHASE_COMPLETED` once the criteria are actually persisted (`rules/core/execution-state.md`'s Execution History format and Phase completion).
 - Do not invent business requirements — an inferred criterion is a hypothesis to confirm, never a decision.
 - Use the existing repository context when relevant.
 - If an external system plausibly holds the authoritative requirement (a Linear/Jira/GitHub issue, a Notion spec) and is available in this session, retrieve it before drafting criteria or questions — see `rules/core/capabilities.md`. Never invent access to a system that isn't configured; if the likely source is unavailable, say so only if it materially affects confidence in the draft.

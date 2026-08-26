@@ -1,0 +1,32 @@
+- generic [ref=f7e3]:
+  - banner [ref=f7e5]:
+    - generic [ref=f7e6]: AI STUDIO
+    - generic [ref=f7e7]: No task selected
+    - generic [ref=f7e9]: Connected
+  - navigation "Tasks" [ref=f7e12]:
+    - list [ref=f7e13]:
+      - listitem [ref=f7e14]:
+        - button "TASK-001 Execution Bridge / Command Runtime Architecture COMPLETE" [ref=f7e15] [cursor=pointer]:
+          - generic [ref=f7e17]:
+            - generic [ref=f7e18]: TASK-001
+            - generic [ref=f7e19]: Execution Bridge / Command Runtime Architecture
+          - generic [ref=f7e20]: COMPLETE
+      - listitem [ref=f7e21]:
+        - button "TASK-002 AI Studio Web UI — First Vertical Slice COMPLETE" [ref=f7e22] [cursor=pointer]:
+          - generic [ref=f7e24]:
+            - generic [ref=f7e25]: TASK-002
+            - generic [ref=f7e26]: AI Studio Web UI — First Vertical Slice
+          - generic [ref=f7e27]: COMPLETE
+      - listitem [ref=f7e28]:
+        - button "TASK-003 Execution Control & Lifecycle Commands COMPLETE" [ref=f7e29] [cursor=pointer]:
+          - generic [ref=f7e31]:
+            - generic [ref=f7e32]: TASK-003
+            - generic [ref=f7e33]: Execution Control & Lifecycle Commands
+          - generic [ref=f7e34]: COMPLETE
+      - listitem [ref=f7e35]:
+        - button "TASK-004 Design Engine & Interactive Prototype READY" [ref=f7e36] [cursor=pointer]:
+          - generic [ref=f7e38]:
+            - generic [ref=f7e39]: TASK-004
+            - generic [ref=f7e40]: Design Engine & Interactive Prototype
+          - generic [ref=f7e41]: READY
+  - generic [ref=f7e42]: Select a task

@@ -18,6 +18,7 @@ Investigate the current problem systematically.
 - Avoid speculative fixes.
 - Consider related edge cases and regression risks.
 - If the root cause reveals a new edge case or a decision worth not rediscovering (not just "how this particular bug was fixed"), persist it into the task's Task Context file's `Edge Cases`/`Decisions` section — reconcile first (re-read the file fresh). Don't log the investigation itself; only the durable fact.
+- When invoked to recover from a `RECOVERABLE` verification failure (as opposed to a general investigation with no task file involved), append a `RECOVERY` `Execution History` event summarizing what failed and what's being retried, including the attempt count if this isn't the first (`rules/core/execution-state.md`'s Execution History format and Loop detection).
 - Keep the investigation proportional to the problem.
 
 ## Output

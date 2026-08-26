@@ -1,7 +1,7 @@
 {
   "name": "ai-toolkit-max",
   "version": "3.2.0",
-  "description": "Reusable engineering toolkit: rules (how to engineer) + skills across ENTRY (classify), THINK (task, clarify, design, plan, impact, estimate, challenge), EXECUTE (next, verify, status, reconcile), QUALITY (test, review, debug, short), and SETUP (audit).",
+  "description": "Lifecycle toolkit: task context, clarify/plan/estimate, execute/verify/review, design pipeline. 14 skills — no setup/advisory overhead.",
   "author": {
     "name": "easylager"
   }

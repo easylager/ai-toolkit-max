@@ -1,0 +1,87 @@
+- generic [active] [ref=f4e1]:
+  - banner [ref=f4e2]:
+    - generic [ref=f4e3]: AI STUDIO — Command Center
+    - generic [ref=f4e4]: CONCEPT PROTOTYPE — TASK-004
+  - main [ref=f4e6]:
+    - region [ref=f4e7]:
+      - paragraph [ref=f4e8]: Design Artifact · DESIGN-001
+      - heading [level=1] [ref=f4e9]:
+        - text: Command your
+        - emphasis [ref=f4e10]: autonomous
+        - text: execution fleet.
+      - paragraph [ref=f4e11]: Every task AI Studio runs — clarified, planned, executed, verified, reviewed — resolves to one durable file on disk. This is what it looks like to watch that whole fleet move at once, without losing the ground truth underneath it.
+      - generic [ref=f4e12]:
+        - generic [ref=f4e13]:
+          - generic [ref=f4e14]: "1"
+          - text: Source of truth
+        - generic [ref=f4e15]:
+          - generic [ref=f4e16]: "6"
+          - text: Lifecycle phases
+        - generic [ref=f4e17]:
+          - generic [ref=f4e18]: "0"
+          - text: Hidden state
+      - generic [ref=f4e19]: SCROLL
+    - region [ref=f4e22]:
+      - paragraph [ref=f4e23]: Fleet Overview
+      - heading "Every task, exactly where it actually is." [level=2] [ref=f4e24]
+      - paragraph [ref=f4e25]: No status is ever assumed. Every card below is a direct read of a real Task Context file — not a cached snapshot, not an optimistic guess.
+      - generic [ref=f4e26]:
+        - article [ref=f4e27]:
+          - generic [ref=f4e28]: TASK-041
+          - heading "Rate limiter for the ingestion queue" [level=3] [ref=f4e29]
+          - generic [ref=f4e30]: COMPLETE
+        - article [ref=f4e32]:
+          - generic [ref=f4e33]: TASK-042
+          - heading "Webhook signature verification" [level=3] [ref=f4e34]
+          - generic [ref=f4e35]: EXECUTING
+        - article [ref=f4e37]:
+          - generic [ref=f4e38]: TASK-043
+          - 'heading "Design: onboarding empty state" [level=3] [ref=f4e39]'
+          - generic [ref=f4e40]: READY FOR REVIEW
+        - article [ref=f4e42]:
+          - generic [ref=f4e43]: TASK-044
+          - heading "Retry policy for flaky provider calls" [level=3] [ref=f4e44]
+          - generic [ref=f4e45]: BLOCKED
+        - article [ref=f4e47]:
+          - generic [ref=f4e48]: TASK-045
+          - heading "Session token rotation" [level=3] [ref=f4e49]
+          - generic [ref=f4e50]: VERIFYING
+        - article [ref=f4e52]:
+          - generic [ref=f4e53]: TASK-046
+          - heading "Archive export job" [level=3] [ref=f4e54]
+          - generic [ref=f4e55]: READY
+    - region [ref=f4e57]:
+      - paragraph [ref=f4e58]: Execution Timeline
+      - heading "One task, six phases, one continuous story." [level=2] [ref=f4e59]
+      - paragraph [ref=f4e60]: Scroll through — the line draws itself as this task's real lifecycle actually progresses.
+      - generic [ref=f4e61]:
+        - paragraph [ref=f4e62]: TASK-042
+        - heading "Webhook signature verification" [level=3] [ref=f4e63]
+        - generic [ref=f4e66]:
+          - generic [ref=f4e67]: Clarify
+          - generic [ref=f4e69]: Plan
+          - generic [ref=f4e71]: Estimate
+          - generic [ref=f4e73]: Execute
+          - generic [ref=f4e75]: Verify
+          - generic [ref=f4e77]: Review
+    - region [ref=f4e79]:
+      - paragraph [ref=f4e80]: Human Review Gate
+      - heading "Nothing ships without a person saying yes." [level=2] [ref=f4e81]
+      - generic [ref=f4e82]:
+        - generic [ref=f4e83]:
+          - paragraph [ref=f4e84]: A generated design artifact is never treated as approved just because it exists. It moves through exactly three states, and only a human moves it into the last one.
+          - list [ref=f4e85]:
+            - listitem [ref=f4e86]: — Draft — being generated, not yet ready to look at
+            - listitem [ref=f4e87]: — Ready for review — a real, interactive prototype, waiting
+            - listitem [ref=f4e88]: — Approved — a human explicitly said so
+        - generic [ref=f4e89]:
+          - text: DESIGN-001
+          - heading "AI Studio Command Center concept" [level=3] [ref=f4e90]
+          - generic [ref=f4e91]:
+            - generic [ref=f4e92]: Current state
+            - generic [ref=f4e93]: READY FOR REVIEW
+          - button "Approve this design" [ref=f4e96] [cursor=pointer]
+          - paragraph [ref=f4e97]: This is a real click — try it.
+    - generic [ref=f4e98]:
+      - generic [ref=f4e99]: TASK-004 · Design Engine, first vertical slice
+      - paragraph [ref=f4e100]: "This page is itself the proof: a real Task Context can hold a real, interactive, browser-rendered design artifact — reviewed by a human, isolated from the application that hosts it, and durable on disk long after this tab closes. Everything above this line is one HTML file, no build step, no framework. What comes next can be React, WebGL, or generated imagery — the architecture underneath doesn't have to change."

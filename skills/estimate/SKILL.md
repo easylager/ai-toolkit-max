@@ -24,7 +24,9 @@ Two modes, chosen from the input:
 - Expose the assumptions and unknowns each estimate depends on.
 - State each slice's verification criteria concretely enough for `/verify` to check against — not a restatement of the goal. Refine the plan's method/level (e.g. "integration test") into the concrete check this slice must pass where that's already knowable; leave it at method/level otherwise.
 - Do not fabricate historical data. If none exists, say so instead of inventing it.
-- Do not modify files, except the task's Task Context file: writing the slice map into its `Slices` section; initializing `status: READY`, current slice 1/total, and each acceptance criterion's `Result: NOT_VERIFIED` the first time a slice map is created for it; and appending the post-work Record into its `Execution History` — see `rules/core/execution-state.md` and `rules/core/task-context.md`.
+- Do not modify files, except the task's Task Context file: writing the slice map into its `Slices` section; initializing `status: READY`, current slice 1/total, and each acceptance criterion's `Result: NOT_VERIFIED` the first time a slice map is created for it; and appending the post-work Record into its `Execution History` — see `rules/core/task-context.md`'s Ownership section (AI-managed row) and `rules/core/execution-state.md`'s Execution History format section.
+- Pre-work: append `PHASE_STARTED | estimate` at the start; when `status` is initialized to `READY` for the first time, append `STATE_CHANGED | estimate | (none) → READY`; once the slice map is written, append `PHASE_COMPLETED | estimate`. Post-work: no new event type applies — the existing Record itself is already the structured entry for that case (`rules/core/execution-state.md`'s Execution History format).
+- This is a bounded operation on the given plan/task file, not an investigation: no repository-wide search beyond it, no subagent or background-agent spawning, no invoking the Supervisor decision model directly (that's `/execute`'s).
 
 ## Output — pre-work
 
