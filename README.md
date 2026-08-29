@@ -9,7 +9,7 @@ A small, stateful toolkit for Claude Code. One persistent task file. Simple work
     ↑
     │ read/write
     │
-  skills (task · clarify · plan · estimate · execute · verify · review)
+  skills (task · clarify · research · plan · estimate · execute · verify · review)
     ↑
     │ use to manage work
     │
@@ -17,10 +17,10 @@ A small, stateful toolkit for Claude Code. One persistent task file. Simple work
 ```
 
 - **Task file** — persistent record of requirements, plan, progress, decisions.
-- **Skills** — `/clarify`, `/plan`, `/estimate`, `/execute`, `/verify`, `/review` — read task, do work, update task, report result.
+- **Skills** — `/research`, `/clarify`, `/plan`, `/estimate`, `/execute`, `/verify`, `/review` — read task, do work, update task, report result.
 - **Rules** — engineering principles pulled into your project's `CLAUDE.md`.
 
-Typical workflow: `/clarify` → `/plan` → `/estimate` → `/execute` (which chains phases until done, or you invoke skills individually).
+Typical workflow: `/research` (if needed) → `/clarify` → `/plan` → `/estimate` → `/execute` (which chains phases until done, or you invoke skills individually). `/research` can repeat later for one targeted follow-up question — see [Skills](#skills).
 Minimal, human-readable, easy to resume after an interruption.
 
 ## Installation
@@ -65,7 +65,7 @@ Both are idempotent — safe to re-run any time. Two more modes, documented belo
 
 ## Skills
 
-Twenty skills, each a distinct mode of work rather than a fixed pipeline stage. None of them are mandatory gates — invoke only what the task warrants.
+Twenty-one skills, each a distinct mode of work rather than a fixed pipeline stage. None of them are mandatory gates — invoke only what the task warrants.
 
 **ENTRY** — decide how much process the task deserves.
 
@@ -84,7 +84,8 @@ Twenty skills, each a distinct mode of work rather than a fixed pipeline stage. 
 | Skill | Use it when |
 |---|---|
 | `/task` | Starting a task outside `/clarify`/`/plan` — from a bare idea or an existing note. Creates or opens the task's Task Context file (`.ai/tasks/TASK-NNN.md` by default, or the configured Obsidian vault). |
-| `/clarify` | Before implementing anything ambiguous. Drafts an Acceptance Contract: candidate acceptance criteria classified CONFIRMED/INFERRED/UNKNOWN, their verification approach, and the questions needed to resolve what's open — the entry point for acceptance criteria in the workflow. |
+| `/research` | `/classify` flagged `research_required: true` (or a specific question is still open). Repository-aware investigation, targeted to the flagged uncertainty — not a full-repository scan. Persists a compact facts/patterns/open-questions summary to the task's `Research Notes`, so `/clarify`/`/plan` don't re-discover what it already found. Skip when nothing about the repo is actually uncertain. |
+| `/clarify` | Before implementing anything ambiguous. Drafts an Acceptance Contract: candidate acceptance criteria classified CONFIRMED/INFERRED/UNKNOWN, their verification approach, and the questions needed to resolve what's open — the entry point for acceptance criteria in the workflow. Reuses `/research`'s `Research Notes` when present instead of re-deriving them. |
 | `/design` | The task is UI-facing and no design context exists yet. Autonomously decides typography/color/composition/motion/3D (asking the user only for genuine business/brand input), builds a disposable HTML/CSS/JS prototype, iterates on it with the user in-browser, and hands off an `APPROVED` prototype as `/plan`'s primary UI source — replacing a Figma lookup when no Figma file exists. |
 | `/creative-explore` | A significant visual project — a new major page, a new product surface, or an explicit request for something distinctive/premium. Generates 3-5 genuinely different creative concepts (not color variants), self-evaluates them, runs each through the Anti-Slop Review, and recommends one with reasoning. Skip for routine UI work — `/design`'s own autonomous Art Direction step is enough there. |
 | `/plan` | Once requirements are clear. Produces a concise implementation plan anchored to `/clarify`'s acceptance criteria — every meaningful criterion mapped to a change and a test, flagged if it has neither. |
@@ -146,7 +147,7 @@ For tasks big enough to need multi-slice tracking across sessions, a task gets a
 ```
 
 ```
-TASK ──▶ classify ──▶ clarify ──▶ plan+estimate ──▶ task file ──▶ next ──▶ slice ──▶ verify ──▶ task file ──▶ next ──▶ …
+TASK ──▶ classify ──▶ research (if needed) ──▶ clarify ──▶ plan+estimate ──▶ task file ──▶ next ──▶ slice ──▶ verify ──▶ task file ──▶ next ──▶ …
 ```
 
 Created lazily — a task that doesn't need it never gets a task file or a `TASK-NNN` id. Full contract in `rules/core/execution-state.md` and `rules/core/task-context.md`, in short:
@@ -155,7 +156,7 @@ Created lazily — a task that doesn't need it never gets a task file or a `TASK
 - **One file per task is the single source of truth** for its position: status (`READY`/`EXECUTING`/`VERIFYING`/`BLOCKED`/`RECOVERABLE`/`REPLAN_REQUIRED`/`COMPLETE`), current slice, blockers, decisions, and each acceptance criterion's verification status (`VERIFIED`/`FAILED`/`BLOCKED`/`NOT_VERIFIED`/`STALE`) with its evidence — plus human-authored context (Objective, Business Context, Constraints, Human Overrides) in the same Obsidian-editable note. State is advisory; the repo (git diff, test output) is always ground truth.
 - **Human edits always win.** A human can open the file directly, change an acceptance criterion, add an edge case, or write a `Human Overrides` note — Claude reconciles against the file fresh before every major step and treats those edits as authoritative, never silently reverting them.
 - **Verification goes stale.** A `VERIFIED` result records the commit it was checked against; if relevant code changes afterward, `/reconcile` (or routine reconciliation before any major step) marks it `STALE` rather than leaving a falsely-current result in place.
-- Only `/task`, `/clarify`, `/plan`, `/estimate`, `/next`, `/verify`, `/reconcile`, and `/debug` (only for a durable edge case/decision) write inside a task file, and nowhere else — never source code, configs, or other project files.
+- Only `/task`, `/clarify`, `/research`, `/plan`, `/estimate`, `/next`, `/verify`, `/reconcile`, and `/debug` (only for a durable edge case/decision) write inside a task file, and nowhere else — never source code, configs, or other project files.
 - Commit `.ai/tasks/` to the project's own repo by default (or to the external vault's own repo, if `TASK_CONTEXT_ROOT` points at one), so a new session or a teammate can resume without replaying the conversation.
 
 Work through it mostly with `/next` and `go`:
@@ -299,6 +300,7 @@ skills/
   execute/SKILL.md
   task/SKILL.md
   clarify/SKILL.md
+  research/SKILL.md
   design/SKILL.md
   creative-explore/SKILL.md
   plan/SKILL.md

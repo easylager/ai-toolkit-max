@@ -48,6 +48,8 @@ Workflow sequence. `phase` starts at `new` and advances when the owning skill pe
 
 `design` and `creative-explore` happen alongside `plan` for UI work — see `rules/frontend/design.md`.
 
+`research` doesn't own a phase either: it can run any time before or during `clarify`/`plan`, and repeat later for one new targeted question, without advancing `phase`. It persists straight to `Research Notes`/`Open Questions` (`rules/core/task-context.md`).
+
 A skill sets `phase` **only** when it persists that phase's output. `/next` and `/status` never change phase.
 
 ## Human Gates

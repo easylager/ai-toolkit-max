@@ -12,9 +12,9 @@ Create an implementation plan for the current task, built around its Acceptance 
 Planning is lightweight and targeted, not exhaustive:
 
 1. **Understand** the task and existing context (Task Context file, `/clarify` draft, or request itself).
-2. **Identify** the smallest set of files/components likely affected by the change.
-3. **Search targeted areas** for existing patterns, dependencies, and related code — using direct Bash/Read/Grep in the main agent's context only (no background/sub-agents spawned by default).
-4. **Inspect only relevant code** — avoid scanning whole repository or reading large unrelated files.
+2. **Identify** the smallest set of files/components likely affected by the change. If the task file's `Research Notes` already cover this, use them instead of re-deriving it.
+3. **Search targeted areas** for existing patterns, dependencies, and related code — but only for what `Research Notes` doesn't already answer. Where they're silent or stale, search directly — Bash/Read/Grep in the main agent's context only (no background/sub-agents spawned by default).
+4. **Inspect only relevant code** — avoid scanning whole repository or reading large unrelated files; skip re-reading what `Research Notes` already established as fact.
 5. **Identify risks and acceptance criteria coverage** — trace each criterion to a change or test.
 6. **Write the plan** and stop.
 

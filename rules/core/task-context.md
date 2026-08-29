@@ -41,6 +41,10 @@ pr: <optional>
 ## Scope
 ### In Scope
 ### Out of Scope
+## Research Notes
+### Facts
+### Relevant Patterns
+### Implications
 ## Acceptance Criteria
 ### AC-NNN
 <one-line, testable description>
@@ -93,6 +97,8 @@ Status: READY | EXECUTING | VERIFYING | DONE
 
 Per-criterion `Evidence`/`Verified at` is the only evidence store — there is deliberately no separate top-level "Evidence" section duplicating it. `Decisions` inside the task file replaces the old `.ai/decisions.md` "tag each entry with its task id" convention: the file itself is already scoped to one task.
 
+`Research Notes` is `/research`'s output — compact, repository-grounded knowledge, not a transcript (no list of files opened, commands run, or dead ends). Unlike `Acceptance Criteria`/`Edge Cases`/`Decisions`, its entries don't carry `NNN` ids: they're not independently tracked or verified, just context later phases read. Anything uncertain belongs in `Open Questions`, not `Facts` — `/research` reuses that section's existing `Q-NNN` convention rather than a separate one.
+
 `Requirement:` and `Result:` are two independently-owned axes on the same criterion, exactly as `rules/core/execution-state.md` defines — never conflate them, and never let implementation proceeding silently promote `Requirement` to `CONFIRMED`.
 
 `phase` starts at `new` the moment a task file is created — never `null`, never a free-form sentinel invented ad hoc (e.g. `INITIATE`). It advances only when a phase-owning skill actually persists that phase's required output; see `rules/core/execution-state.md`'s Phase transitions section for the full sequence and which skill is responsible at each step.
@@ -104,7 +110,7 @@ Task file body content (Objective, Scope, Acceptance Criteria descriptions, Deci
 ## Ownership
 
 - **Human-controlled** — Claude proposes only when explicitly asked, never silently overwrites: `title`, `priority`, `creative_autonomy`, `execution_mode`, Objective, Business Context, Constraints, Human Overrides.
-- **Shared** — Claude proposes, a human edit is authoritative: Acceptance Criteria, Edge Cases, Decisions, Test Strategy, Assumptions, Scope, Open Questions.
+- **Shared** — Claude proposes, a human edit is authoritative: Acceptance Criteria, Edge Cases, Decisions, Test Strategy, Assumptions, Scope, Research Notes, Open Questions.
 - **AI-managed** — Claude writes; a human can still hand-edit (e.g. to unblock): `status`, `phase`, Slices, Progress, Blockers, Next Action, Execution History.
 
 Human edits always take precedence over an AI assumption or proposal. A human edit that directly contradicts something required elsewhere in the file is never silently resolved either way — surface it as an Open Question or `BLOCKED` reason instead of guessing which side wins.
