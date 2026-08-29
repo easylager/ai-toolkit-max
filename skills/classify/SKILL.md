@@ -1,35 +1,35 @@
 ---
 name: classify
-description: Entry point of the adaptive workflow. Assess a task's complexity, risk, and blast radius, then recommend the minimum workflow depth needed — which existing skills to run, in what order. Does not clarify, plan, estimate, write code, test, or review.
+description: Точка входа адаптивного рабочего процесса. Оценить сложность, риск и радиус воздействия задачи, затем рекомендовать необходимую глубину рабочего процесса — какие существующие skills запустить и в каком порядке. Не уточняет требования, не планирует, не оценивает, не пишет код, не тестирует и не рецензирует.
 ---
 
-# Classify
+# Классификация
 
-Assess the task and recommend the minimum workflow depth needed to handle it safely. This is the entry point — it decides how much process the task deserves, nothing else.
+Оцените задачу и рекомендуйте минимальную необходимую глубину рабочего процесса для её безопасного выполнения. Это точка входа — она определяет, какой объём процесса заслуживает задача, ничего больше.
 
-## Rules
+## Правила
 
-- Do not modify files.
-- Do not clarify requirements, produce a plan, estimate effort, write code, design tests, or review results — recommend the skill for that instead of doing it.
-- Assess only the dimensions that materially affect workflow depth: complexity, uncertainty, risk, blast radius, architectural impact, external dependencies, data/persistence impact, security sensitivity, reversibility. Omit any dimension that isn't material to this task.
-- Use qualitative levels (Trivial/Low/Medium/High), not scores or narrative.
-- Base the assessment on the task description and repository context — do not assume business intent that isn't stated.
-- Match process depth to task complexity: recommend the minimum defensible workflow, not the maximum available. A trivial task should recommend just `implement → verify`.
-- Reference only existing skill names in the recommended chain (`task`, `clarify`, `design`, `creative-explore`, `plan`, `impact`, `estimate`, `challenge`, `next`, `verify`, `design-review`, `status`, `reconcile`, `test`, `review`, `debug`, `short`) — never invent a new one. `implement` may also appear in the chain, but it is not a toolkit skill: it denotes Claude's native code-writing behavior and has no SKILL.md.
-- Recommend `design` only for tasks that are visibly UI/frontend-facing (a new screen, dashboard, form, or a substantial layout redesign) — omit it from the chain for backend-only work or a small style-only tweak to existing UI (color, spacing, copy, single-element sizing).
-- Recommend `creative-explore`, placed between `design` and `plan`, only for a significant visual project — a new major page, a new product surface, or an explicit request for something distinctive/premium. Omit it for routine UI work; `design`'s own autonomous Art Direction step is enough there.
-- Recommend `design-review` after implementing a UI-facing task that went through `design` — placed before `verify`/`review` in the chain. Omit it for backend-only work or a small tweak that skipped `design` too.
-- Recommend `task` only when the request has no natural entry through `clarify`/`plan` (e.g. resuming from a bare id or an external note). Recommend `reconcile` only when resuming a task without the conversation context that produced its current state, or when there's concrete reason to suspect drift — not as a routine step in every chain.
-- Mention potential capabilities (MCP, filesystem, database, cloud, browser, external APIs) only if the task plausibly needs them. Never install, configure, or assume access to any of them.
-- Keep the output short — this is a routing decision, not an analysis.
+- Не изменяйте файлы.
+- Не уточняйте требования, не создавайте план, не оценивайте усилия, не пишите код, не разрабатывайте тесты и не рецензируйте результаты — вместо этого рекомендуйте соответствующий skill.
+- Оценивайте только те аспекты, которые материально влияют на глубину рабочего процесса: сложность, неопределённость, риск, радиус воздействия, архитектурное воздействие, внешние зависимости, воздействие на данные/сохранение, чувствительность безопасности, обратимость. Пропускайте любой аспект, который не важен для этой задачи.
+- Используйте качественные уровни (Тривиально/Низко/Средне/Высоко), а не оценки или описание.
+- Основывайте оценку на описании задачи и контексте репозитория — не предполагайте деловые цели, которые не указаны.
+- Согласуйте глубину процесса со сложностью задачи: рекомендуйте минимальный обоснованный рабочий процесс, а не максимально доступный. Тривиальная задача должна рекомендовать только `implement → verify`.
+- Ссылайтесь только на существующие названия skills в рекомендуемой цепочке (`task`, `clarify`, `design`, `creative-explore`, `plan`, `impact`, `estimate`, `challenge`, `next`, `verify`, `design-review`, `status`, `reconcile`, `test`, `review`, `debug`, `short`) — никогда не изобретайте новое. `implement` также может появиться в цепочке, но это не skill набора инструментов: он обозначает встроенное поведение Claude по написанию кода и не имеет SKILL.md.
+- Рекомендуйте `design` только для задач, которые явно ориентированы на UI/интерфейс (новый экран, панель управления, форма или существенный редизайн макета) — пропускайте его для работ только на backend или небольшой стилистической правки существующего UI (цвет, отступы, текст, изменение размера одного элемента).
+- Рекомендуйте `creative-explore`, размещённый между `design` и `plan`, только для значительного визуального проекта — новая основная страница, новая поверхность продукта или явный запрос на что-то отличительное/премиум. Пропускайте для обычной работы с UI; собственный шаг Art Direction в `design` достаточен.
+- Рекомендуйте `design-review` после реализации UI-задачи, которая прошла через `design` — размещённый перед `verify`/`review` в цепочке. Пропускайте для работ только на backend или небольшой правки, которая пропустила `design`.
+- Рекомендуйте `task` только когда запрос не имеет естественного входа через `clarify`/`plan` (например, возобновление с голого id или внешней заметки). Рекомендуйте `reconcile` только при возобновлении задачи без контекста беседы, который произвел её текущее состояние, или когда есть конкретная причина подозревать дрейф — не как рутинный шаг в каждой цепочке.
+- Упоминайте потенциальные возможности (MCP, файловая система, база данных, облако, браузер, внешние API) только если задача правдоподобно их нуждается. Никогда не устанавливайте, не конфигурируйте и не предполагайте доступ к ним.
+- Держите результат кратким — это решение о маршрутизации, а не анализ.
 
-## Output
+## Вывод
 
-### Assessment
-One line per material dimension: `<Dimension>: <Trivial/Low/Medium/High>`, with a short reason only if non-obvious. Omit dimensions that don't apply.
+### Оценка
+По одной строке на каждый материальный аспект: `<Аспект>: <Тривиально/Низко/Средне/Высоко>`, с кратким обоснованием только если оно неочевидно. Пропускайте аспекты, которые не применяются.
 
-### Recommended workflow
-A single chain, left to right in execution order, using only the skill names above and/or `implement`. Note that `/execute` (optionally `/execute TASK-NNN`) runs this chain automatically, phase by phase, stopping only at a Human Gate or blocker — mention it as the automatic-run option, not as a chain member itself.
+### Рекомендуемый рабочий процесс
+Одна цепочка, слева направо в порядке выполнения, используя только названия skills выше и/или `implement`. Обратите внимание, что `/execute` (опционально `/execute TASK-NNN`) выполняет эту цепочку автоматически, фаза за фазой, останавливаясь только при Human Gate или блокере — упомяните его как опцию автоматического запуска, а не как член цепочки.
 
-### Potential capabilities
-Only if the task plausibly needs something beyond the local filesystem. Omit otherwise.
+### Потенциальные возможности
+Только если задача правдоподобно нуждается в чём-то выходящем за пределы локальной файловой системы. В противном случае пропускайте.
