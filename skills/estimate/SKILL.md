@@ -12,7 +12,7 @@ Two modes, chosen from the input:
 
 ## Rules
 
-- Take the existing plan as primary input — the task's Task Context file if present, otherwise the plan already produced in this conversation. Don't re-derive requirements or approach `/plan` already settled. Read the file's acceptance criteria along with it — they drive decomposition, not just the Changes list.
+- Take the existing plan as primary input — the task's Task Context file if present, and only that: if the file exists but its `Technical Plan` is empty, that means `/plan` hasn't actually persisted one yet, regardless of what a plan looked like earlier in this conversation — say so and recommend `/plan` rather than reconstructing it from chat memory (`rules/core/common-rules.md`'s Chat context is not state). Only when no task file exists at all, take the plan already produced in this conversation, and say plainly that nothing is persisted yet. Read the file's acceptance criteria along with it — they drive decomposition, not just the Changes list.
 - Decompose into the minimum reasonable number of slices. A slice is a meaningful, independently verifiable unit of work, not a coding step — do not list file-by-file implementation actions unless one is needed to mark a slice boundary. Prefer slices that each move one or more acceptance criteria toward verified, over slices organized by implementation layer (e.g. "models", "services", "tests" as separate slices).
 - Do not create artificial micro-slices. A small, well-understood plan can be a single slice — don't force decomposition.
 - Every acceptance criterion from the plan should be covered by at least one slice's `Covers:`. Flag any criterion with no covering slice instead of silently leaving it unaddressed.
@@ -24,11 +24,13 @@ Two modes, chosen from the input:
 - Expose the assumptions and unknowns each estimate depends on.
 - State each slice's verification criteria concretely enough for `/verify` to check against — not a restatement of the goal. Refine the plan's method/level (e.g. "integration test") into the concrete check this slice must pass where that's already knowable; leave it at method/level otherwise.
 - Do not fabricate historical data. If none exists, say so instead of inventing it.
-- Do not modify files, except the task's Task Context file: writing the slice map into its `Slices` section; initializing `status: READY`, current slice 1/total, and each acceptance criterion's `Result: NOT_VERIFIED` the first time a slice map is created for it; and appending the post-work Record into its `Execution History` — see `rules/core/task-context.md`'s Ownership section (AI-managed row) and `rules/core/execution-state.md`'s Execution History format section.
-- Pre-work: append `PHASE_STARTED | estimate` at the start; when `status` is initialized to `READY` for the first time, append `STATE_CHANGED | estimate | (none) → READY`; once the slice map is written, append `PHASE_COMPLETED | estimate`. Post-work: no new event type applies — the existing Record itself is already the structured entry for that case (`rules/core/execution-state.md`'s Execution History format).
-- This is a bounded operation on the given plan/task file, not an investigation: no repository-wide search beyond it, no subagent or background-agent spawning, no invoking the Supervisor decision model directly (that's `/execute`'s).
+- Do not modify files, except the task's Task Context file: writing the slice map into its `Slices` section; initializing `status: READY`, current slice 1/total, and each acceptance criterion's `Result: NOT_VERIFIED` the first time a slice map is created for it; and appending the post-work Record into its `Execution History` — see `rules/core/task-context.md`'s Ownership section (AI-managed row) and `rules/core/execution-state.md`'s Execution History format section. Follow `rules/core/common-rules.md`'s Persist-before-report — the slice map isn't reportable until it's written and re-read back.
+- Pre-work: append `PHASE_STARTED | estimate` at the start; when `status` is initialized to `READY` for the first time, append `STATE_CHANGED | estimate | (none) → READY`; once the slice map is written, append `PHASE_COMPLETED | estimate` and set `phase: estimate` in frontmatter. If the pass stops short of a written slice map (e.g. the plan itself is missing or a criterion has no coverable slice), append `SKILL_FAILED` instead before ending the turn (`rules/core/common-rules.md`'s Blocked or incomplete runs still write history). Post-work: no new event type applies — the existing Record itself is already the structured entry for that case (`rules/core/execution-state.md`'s Execution History format).
+- Stay focused on this task's plan and criteria. Don't spawn subagents or search the repository broadly.
 
 ## Output — pre-work
+
+Begin with the Task header (`rules/core/common-rules.md`): `Task: TASK-NNN — <title>`.
 
 Keep it minimal. A small, well-understood plan can collapse to a single slice, or even one line — don't pad it.
 

@@ -9,8 +9,9 @@ Turn the current business request into a draft Acceptance Contract: candidate ac
 
 ## Rules
 
-- The only file this may create or update is the current task's Task Context file (`rules/core/task-context.md`) — create it (allocating `TASK-NNN`, same allocation rule `/plan` uses) once clarification is worth persisting, or update its `Objective`/`Scope`/`Acceptance Criteria`/`Edge Cases`/`Assumptions`/`Open Questions` if it already exists. Reconcile first: re-read the file fresh and note any human edits before adding to it. Never write implementation code or any other file.
-- When creating the task file, append a `TASK_CREATED` `Execution History` event; either way, append `PHASE_STARTED` at the start of this pass and `PHASE_COMPLETED` once the criteria are actually persisted (`rules/core/execution-state.md`'s Execution History format and Phase completion).
+- The only file this may create or update is the current task's Task Context file (`rules/core/task-context.md`) — create it (allocating `TASK-NNN`, same allocation rule `/plan` uses, `phase: new` at creation) once clarification is worth persisting, or update its `Objective`/`Scope`/`Acceptance Criteria`/`Edge Cases`/`Assumptions`/`Open Questions` if it already exists. Reconcile first: re-read the file fresh and note any human edits before adding to it. Never write implementation code or any other file.
+- Follow `rules/core/common-rules.md`'s Persist-before-report: read, reason, persist the criteria/questions to the file, re-read to confirm, only then show the Output below. Anything shown before that persist happens (e.g. thinking out loud about candidate criteria) is a draft, not a result — label it as such rather than presenting it as saved.
+- When creating the task file, append a `TASK_CREATED` `Execution History` event; either way, append `PHASE_STARTED` at the start of this pass. Once the criteria are actually persisted, append `PHASE_COMPLETED` and set `phase: clarify` in frontmatter. If the pass ends without reaching that point (e.g. stopped short because a blocking `UNKNOWN` needs a human answer first), append `HUMAN_GATE` instead before ending the turn — never leave a `PHASE_STARTED` with no matching close (`rules/core/common-rules.md`'s Blocked or incomplete runs still write history).
 - Do not invent business requirements — an inferred criterion is a hypothesis to confirm, never a decision.
 - Use the existing repository context when relevant.
 - If an external system plausibly holds the authoritative requirement (a Linear/Jira/GitHub issue, a Notion spec) and is available in this session, retrieve it before drafting criteria or questions — see `rules/core/capabilities.md`. Never invent access to a system that isn't configured; if the likely source is unavailable, say so only if it materially affects confidence in the draft.
@@ -25,29 +26,21 @@ Turn the current business request into a draft Acceptance Contract: candidate ac
 - Avoid exhaustive checklists. Prefer 3-7 high-value criteria and questions over a long list.
 - If the request is already sufficiently clear — criteria confirmed, no material open questions — say so and skip the sections that would otherwise be empty.
 
-## Output
+## Output (in Russian)
 
-Keep the response concise.
+Task: TASK-NNN — <title>
 
-### Acceptance criteria
-Per criterion:
-```
-AC-<NNN>
-<one-line, testable description>
-Status: CONFIRMED | INFERRED | UNKNOWN
-Verification: <method/level — omit if it depends on an open question>
-Capability: <MCP hint per rules/core/capabilities.md — omit if the built-in toolchain is sufficient>
-```
+Brief summary of what's clear and what's open:
 
-### Open questions
-Only unresolved decisions that materially affect implementation or verification.
-```
-Q-<NNN>
-<question, phrased against an inferred criterion or gap where possible>
-Affects: <AC id(s) and/or "missing criterion">
-```
+**Требования:**
+- AC-001: Description — CONFIRMED
+- AC-002: Description — INFERRED (need to confirm)
+- AC-003: Description — UNKNOWN (blocked on answer)
 
-### Edge cases
-Only realistic cases that could affect correctness. Omit if none.
+**Открытые вопросы:**
+- Q-001: Question? Affects: AC-002, AC-003
 
-If nothing important is unresolved, say so instead of producing empty sections.
+**Граничные случаи** (if any):
+- Edge case description
+
+If all requirements are confirmed and no questions block implementation, say so.

@@ -1,11 +1,11 @@
 ---
 name: execute
-description: Orchestration entry point — state-driven Supervisor (`rules/core/execution-state-supervisor.md`) that re-evaluates Task Context at every phase boundary and picks exactly one next action. Checkpoints after every phase. `/execute TASK-NNN` resumes from persisted state. See `rules/core/common-rules.md` for output format.
+description: Run a task through its workflow automatically, phase by phase, stopping only at blockers, decisions, or completion. Resume with `/execute TASK-NNN`.
 ---
 
 # Execute
 
-Run a task's next phase automatically — a driver for existing skills, not a replacement. Every phase follows that skill's rules. Re-evaluates after every phase per `rules/core/execution-state-supervisor.md`. Load task context via `rules/core/context-pack.md`.
+Run the task's workflow automatically. At each phase boundary, decide the next skill to invoke based on the current state. Each phase follows that skill's normal rules. Continue until a Human Gate, blocker, or completion.
 
 ## Which task
 
@@ -17,69 +17,40 @@ Optionally takes a `TASK-NNN` argument, same resolution as `/next`/`/status`:
 
 ## Rules
 
-### Startup (every invocation)
-- Reconcile first per `rules/core/common-rules.md` — load compact context per `rules/core/context-pack.md`, then inspect repo state.
-- If reconciliation finds material drift (`skills/reconcile/SKILL.md`), handle before continuing.
-- Read `execution_mode` from frontmatter. `MANUAL` → say so, point at individual skills. `SUPERVISED`/`AUTONOMOUS` per supervisor model.
+- Reconcile first per `rules/core/common-rules.md` — re-read the task file fresh and check if repo changes affect its validity.
+- One phase at a time. After each phase completes and is persisted, re-read the task file and decide what's next.
+- If you encounter a Human Gate (requirements unclear, creative approval needed, high-risk action, final review), stop and present it.
+- If a blocker is present, stop and tell the user what's needed.
+- If all acceptance criteria are VERIFIED, move to review.
+- Output the phase result simply — what happened, what's next.
+- Write to task file only what the current phase owns (per `rules/core/task-context.md` Ownership table).
 
-### Supervisor decision loop
-Follow `rules/core/execution-state-supervisor.md` exactly.
+## Output (in Russian)
 
-- Never precompute a phase list. One decision per boundary from current state.
-- On `EXECUTE`, run exactly one phase via the corresponding skill's rules.
-- Persist output per Phase completion table before deciding again.
-- `SUPERVISED`: stop after each persisted phase (except RETRY sub-loops within one phase).
-- Human corrections since last decision are inputs to the next decision.
-- Visual loop for UI tasks: implement → design-review → fix if FAIL.
-- `REPLAN` always stops.
+Show progress in phases. When work completes or hits a blocker, explain what happened and what's next.
 
-### Human Gates
-Four gates per `rules/core/execution-state.md` Autonomy section. Append `HUMAN_GATE`/`HUMAN_DECISION` events.
-
-### Loop detection
-Per `rules/core/execution-state.md` Loop detection section.
-
-### Reporting
-Per `rules/core/common-rules.md` output brevity rules. Checklist progress (✓ per phase), not transcripts.
-
-## Output
-
-### Started / Resumed
+Example during execution:
 ```
-Task: <id> — <title>
-Mode: AUTONOMOUS | SUPERVISED  (from execution_mode; AUTONOMOUS if unset)
-Current stage: <phase>
-Supervisor decision: EXECUTE — <the one next action, not a plan beyond it>
-```
-Then proceed directly into execution — don't wait for acknowledgment. Never list a multi-step chain here; only the single decision just made.
+Task: TASK-001 — Users list
 
-### Paused (SUPERVISED)
-```
-Task: <id> — <title>
-Mode: SUPERVISED
-✓ <phase just completed> — <one line result>
-Current: <phase>
-Next Supervisor decision (pending): <what it will be, so the user knows what continuing means>
-```
-Reply, or re-invoke `/execute TASK-NNN`, to continue. This is not a Human Gate — nothing is blocked, no decision is needed beyond "go ahead" — it's a pacing pause, distinct from the Human Gate format below.
+✓ clarify — 3 criteria confirmed, 2 open
+✓ plan — 5 slices
+→ estimate — breaking down work
 
-### Progress (between gates)
-```
-✓ <phase> — <one line result>
-✓ <phase> — <one line result>
-...
-Current: <phase>
-Next human checkpoint: <gate name, or "none — running to completion">
+Продолжаем...
 ```
 
-### Stopped at a Human Gate / Blocker / Loop limit
-State exactly which one, in that gate's own format (Requirements' questions, Creative Approval's recommendation per `skills/design/SKILL.md`'s Output, the high-risk action's description and blast radius, or the loop's attempted/failed/needed summary). End with what response continues execution.
-
-### COMPLETE
+When complete:
 ```
-Task: <id> — <title>
-State: COMPLETE
-Acceptance: <n>/<n> criteria verified
-Review: <no open Critical/High findings>
-Design review: <assessment, or "n/a — not a UI-facing task">
+Task: TASK-001 — Users list
+
+Готово: 5/5 критериев проверены.
+
+Что сделано:
+- требования уточнены
+- план утвержден
+- реализованы все срезы
+- пройдена финальная проверка
+
+Следующий шаг: /review
 ```

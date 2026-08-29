@@ -2,13 +2,7 @@
 
 Persisted execution state for multi-slice, resumable tasks. One file per task — see `rules/core/task-context.md` for schema.
 
-For Supervisor orchestration details, see `rules/core/execution-state-supervisor.md` (`/execute` only).
-
-For stage-aware reading, see `rules/core/context-pack.md`.
-
 For shared skill constraints, see `rules/core/common-rules.md`.
-
-Control Plane vs Reasoning Plane boundary: `rules/core/lifecycle-planes.md`.
 
 ## Tasks
 
@@ -25,61 +19,62 @@ Two independent axes per `AC-NNN`:
 
 No separate "implementation status" — read from slice status. `VERIFIED` requires evidence, never agent confidence.
 
-## Execution loop
+## Work loop (estimate → verify → review)
 
-`/estimate` (READY) → `/next` picks slice → implement → `/verify` (VERIFYING) → checkpoint → repeat → COMPLETE → `/review`.
+Once a plan is estimated, work is slice-by-slice:
 
-```
-READY → implement → VERIFYING → READY | COMPLETE
-VERIFYING → RECOVERABLE → /debug → VERIFYING
-VERIFYING → REPLAN_REQUIRED → /plan → /estimate
-(any) → BLOCKED → READY
-```
+1. `/next` tells you which slice to work on
+2. Implement the slice
+3. `/verify` checks if the slice's acceptance criteria hold
+   - If yes: move to next slice
+   - If verification fails locally (test fails, code bug): `/debug` → `/verify` again
+   - If plan is wrong (assumption broke): stop, `/plan` → `/estimate` again
+4. When all criteria are verified: `/review` for final quality check
 
-- Never implement an entire plan in one pass.
-- A slice isn't done until `/verify` marks its criteria VERIFIED.
-- RECOVERABLE: local failure → `/debug` → `/verify` automatically.
-- REPLAN_REQUIRED: assumption broke or AC changed → stop → `/plan` → `/estimate`.
+Never implement the entire plan in one pass; work incrementally and verify at each step.
 
-Checkpoint format (detail for CHECKPOINT events):
+## Phases
 
-```
-Task: <id>
-Completed: <what changed>
-Verified: <how>
-Acceptance: <n>/<m>
-Status: READY | COMPLETE | BLOCKED | RECOVERABLE | REPLAN_REQUIRED
-Next: <action>
-```
+Workflow sequence. `phase` starts at `new` and advances when the owning skill persists its results.
 
-## Autonomy
+| Phase | What's needed to advance | Owned by |
+|---|---|---|
+| `new` | Acceptance criteria and questions | `/clarify` |
+| `clarify` | Technical plan and final criteria | `/plan` |
+| `plan` | Slices broken down | `/estimate` |
+| `estimate` | First slice result persisted | `/verify` |
+| `verify` | All criteria verified | `/review` |
+| `review` | (task complete) | — |
 
-Keep moving when next action is obvious, low-risk, ACs unchanged, verification passes.
+`design` and `creative-explore` happen alongside `plan` for UI work — see `rules/frontend/design.md`.
 
-**Four Human Gates** (never invent more):
+A skill sets `phase` **only** when it persists that phase's output. `/next` and `/status` never change phase.
+
+## Human Gates
+
+**Four decision points** (never invent more):
 
 1. **Requirements** — UNKNOWN AC blocks safe implementation.
-2. **Creative Approval** — design/creative-explore output still DRAFT.
+2. **Creative Approval** — design/creative-explore output needs user approval.
 3. **High-risk action** — destructive/irreversible ops.
-4. **Final review** — before COMPLETE: all AC VERIFIED, `/review` clean, `/design-review` clean if UI task.
+4. **Final review** — before COMPLETE: all AC VERIFIED, `/review` clean.
 
-Gate = `BLOCKED` (or DRAFT for creative) with reason in Blockers. Also `REPLAN_REQUIRED` when plan invalidates.
+When a gate is reached, the task is `BLOCKED` with reason in Blockers until the user decides.
 
-`/execute` chains phases within one invocation; individual skills remain independently invocable.
+`/execute` chains phases in one invocation; individual skills remain independently invocable.
 
-## Loop detection
+### Execution History
 
-Same phase + same failure signature for `max_verify_iterations` times (`.ai/config`, default 3) → `BLOCKED`, report attempts and needed decision.
+Simple log of what happened. Minimal format: timestamp | what changed | why or evidence.
 
-## Supervisor decision model
+Example:
+```
+2025-08-26 14:30 | clarified requirements | 3 ACs confirmed, 2 unknown
+2025-08-26 14:45 | plan approved | 5 slices
+2025-08-26 16:00 | slice 1 verified | tests pass
+```
 
-Moved to `rules/core/execution-state-supervisor.md` — loaded by `/execute` only. Other skills cite specific sections of this file.
-
-### Execution History format
-
-Pipe-delimited one-liners. Event types and ownership: `rules/core/execution-state-supervisor.md` Execution History format section.
-
-Trim when >50 lines — archive to `.ai/tasks/archive/TASK-NNN-history.md`, keep last 20.
+Keep last 20 entries; older entries are less useful.
 
 ## Principles
 

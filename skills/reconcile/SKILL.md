@@ -11,13 +11,15 @@ Compare the task's persisted Task Context against ground truth — the repo, git
 
 - Read the task file fresh off disk — never rely on what the conversation last saw.
 - Detect, per `rules/core/task-context.md`'s "Detecting human edits": new or reworded Acceptance Criteria, changed `Requirement`/`Result` values, new Edge Cases, changed Constraints, new `Human Overrides` content, changed Test Strategy, new Blockers.
-- For each Acceptance Criterion currently `VERIFIED`, compare its `Verified at` commit SHA against the repo's current state (`git diff <sha>..HEAD -- <relevant files>` or equivalent). If relevant files changed since, mark it `STALE` — do not leave a falsely-current `VERIFIED` in place. Append an `AC_RESULT` `Execution History` event for each one flipped (`AC-NNN VERIFIED → STALE — <files changed since <sha>>`).
-- Human edits are authoritative — never revert one to match a prior AI assumption. If a human edit directly contradicts something else required in the file, surface it as an Open Question or a Blocker instead of picking a side.
-- Material drift (a changed/new Acceptance Criterion, a Human Override that invalidates the current plan or an in-progress slice, a Blocker with no clear resolution) sets `status: BLOCKED` or `status: REPLAN_REQUIRED` — the same states `rules/core/execution-state.md` defines, never a new one. Non-material drift (an edge case added for later, a note in Business Context) doesn't change `status`. Whenever `status` actually changes, append a `STATE_CHANGED` `Execution History` event (`old → new`, per `rules/core/execution-state.md`'s Execution History format) — omit it when nothing changed.
-- Do not modify files other than the task file, and only the sections drift actually requires updating (`Result` → `STALE`, `Blockers`, `status`, `Open Questions`) — never rewrite sections that didn't drift.
+- For each Acceptance Criterion marked `VERIFIED`, check if relevant files changed since the `Verified at` commit. If so, mark it `STALE` — don't leave a false "verified" in place.
+- Human edits in the file are authoritative — never silently revert them.
+- Material drift (changed criterion, human override that breaks the plan, blockers that can't be resolved) may need status changes: `BLOCKED` or `REPLAN_REQUIRED`. Non-material drift (edge cases noted for later) doesn't change status.
+- Update only sections that actually drifted. Write changes, re-read to confirm before reporting.
 - Do not write implementation code and do not decide the next action (that's `/next`) — reconcile reports drift and updates status; `/next` acts on it.
 
 ## Output
+
+Begin with the Task header (`rules/core/common-rules.md`): `Task: TASK-NNN — <title>`.
 
 Keep it concise.
 

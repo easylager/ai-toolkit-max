@@ -1,30 +1,27 @@
 # ai-toolkit-max
 
-A reusable engineering toolkit for Claude Code, split into two layers:
+A small, stateful toolkit for Claude Code. One persistent task file. Simple workflow. Principles and skills.
+
+**How it works:**
 
 ```
-                    ai-toolkit-max
-                          │
-                      classify
-                (picks workflow depth)
-                          │
-                execute (runs it automatically)
-                          │
-          ┌───────────────┴────────────────┐
-          │                                 │
-        RULES                            SKILLS
-          │                                 │
-   ┌──────┼──────┐          THINK:    task · clarify · design · creative-explore · plan · impact · estimate · challenge
-   ↓      ↓      ↓          EXECUTE:  next · verify · reconcile   (implementing itself is native)
- core  backend frontend     QUALITY:  test · review · design-review · short
+.ai/tasks/TASK-NNN.md  (source of truth)
+    ↑
+    │ read/write
+    │
+  skills (task · clarify · plan · estimate · execute · verify · review)
+    ↑
+    │ use to manage work
+    │
+  Claude Code (the execution engine)
 ```
 
-- **Rules** answer *how I should engineer* — always-on principles you pull into a project's `CLAUDE.md`.
-- **Skills** answer *what process should I run now* — on-demand workflows you invoke with `/clarify`, `/plan`, etc.
+- **Task file** — persistent record of requirements, plan, progress, decisions.
+- **Skills** — `/clarify`, `/plan`, `/estimate`, `/execute`, `/verify`, `/review` — read task, do work, update task, report result.
+- **Rules** — engineering principles pulled into your project's `CLAUDE.md`.
 
-Process depth is meant to scale with the task. `classify` is the entry point: it looks at the task and recommends the minimum chain needed — a trivial change is just `implement → verify`; a risky or ambiguous one pulls in `clarify → plan → estimate → impact/challenge → next → implement → verify → review`; a UI-facing one inserts `design` between `clarify` and `plan`, and `design-review` between `implement` and `verify`; a significant visual project (a new major page, a new product surface) additionally inserts `creative-explore` between `design` and `plan` to generate and evaluate several genuinely different concepts before committing to one; resuming a task without conversation context inserts `reconcile` before `next`. See `rules/core/engineering.md`. There's no skill for "implement" — writing the code is Claude's normal behavior, not a separate mode.
-
-`execute` (optionally `execute TASK-NNN`) runs that decided chain automatically, phase by phase, within one invocation — instead of you invoking each skill by hand — stopping only at one of four Human Gates (Requirements, Creative Approval, a high-risk action, or Final review), a blocker, a loop-detection limit, or `COMPLETE`. It's a driver for the chain, not a replacement for the skills in it — invoke them individually any time you want manual control instead.
+Typical workflow: `/clarify` → `/plan` → `/estimate` → `/execute` (which chains phases until done, or you invoke skills individually).
+Minimal, human-readable, easy to resume after an interruption.
 
 ## Installation
 

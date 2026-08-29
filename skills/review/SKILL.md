@@ -20,7 +20,7 @@ Review the current implementation or recent changes as a senior engineer.
 - Respect the existing project architecture and conventions.
 - Acceptance criteria status is `/verify`'s job, not this one's — don't re-verify or restate per-criterion PASS/FAIL here. If the task's Task Context file shows criteria still `NOT_VERIFIED`/`FAILED`/`STALE`, note it in one line and review the code on its merits regardless — a task can pass review and still not be acceptance-verified, or vice versa.
 - If a finding reveals a new edge case or a decision worth not rediscovering, say so — persisting it into the task file's Edge Cases/Decisions is `/debug`'s or a follow-up `/plan`'s job, not written directly here.
-- Do not modify files, with exactly one exception: when a Task Context file already exists for this task, append a single `REVIEW` `Execution History` event summarizing the outcome (clean, or `<n>` findings by severity) — nothing else in the file may be touched, and the findings themselves stay in this response, never duplicated into the task file (`rules/core/execution-state.md`'s Execution History format).
+- Do not modify files, with exactly one exception: when a Task Context file already exists for this task, append a single `REVIEW` `Execution History` event summarizing the outcome (clean, or `<n>` findings by severity), and set `phase: review` in frontmatter if not already set — nothing else in the file may be touched, and the findings themselves stay in this response, never duplicated into the task file (`rules/core/execution-state.md`'s Execution History format and Phase transitions). Persist that event and re-read the file to confirm before reporting (`rules/core/common-rules.md`'s Persist-before-report).
 - Do not rewrite code unless explicitly asked.
 
 ## Priority
@@ -36,7 +36,9 @@ Only report issues that are actionable.
 
 ## Output
 
-Start with:
+Begin with the Task header (`rules/core/common-rules.md`): `Task: TASK-NNN — <title>` — omit only if no task file exists for this work.
+
+Then:
 
 **Overall:** one short assessment.
 

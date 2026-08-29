@@ -30,75 +30,33 @@ EXECUTING (actually implementing a slice) is not a state `next` reports — it's
 
 ## Rules
 
-Per `rules/core/common-rules.md`: file ownership, reconciliation, context-pack loading.
+- **Read-only.** `/next` reads the task file and repo; never writes. It reports the current state, not persisted facts.
+- Reconcile first — re-read the file fresh off disk, never assume what an earlier turn reported.
+- For each slice, check: are all its criteria verified? If not, it's READY or BLOCKED or RECOVERABLE.
+- If no slices exist, recommend `/estimate`.
+- Among READY slices, prefer ones that move unverified criteria toward completion.
+- COMPLETE only when all acceptance criteria are VERIFIED (not just all slices touched).
+- Keep it short — assume context from earlier work.
 
-- Load task context per `rules/core/context-pack.md` (implement/next stage sections).
-- Reconcile first, then inspect repo scoped to the current/candidate slice's `Scope:` field when a slice map exists — trust repo over stale file.
-- No repository-wide search beyond selected task/slice, no subagent or background-agent spawning, no invoking the Supervisor decision model directly (that's `/execute`'s).
-- If no slice map exists yet, say so and recommend `/estimate` rather than improvising slices.
-- A slice already implemented but unverified is VERIFYING, not a new READY slice — don't propose work on top of unverified work.
-- A failed verification is always RECOVERABLE or REPLAN_REQUIRED, never a bare "it failed" — classify it using the definitions above before reporting.
-- Among multiple READY slices, prefer the one that moves a `NOT_VERIFIED` or `FAILED` acceptance criterion toward `VERIFIED` — the goal is verified acceptance, not code volume.
-- Never report COMPLETE from slice count alone — cross-check the task file's Acceptance Criteria section; a task with unverified, failed, or stale criteria isn't COMPLETE even if every slice was touched.
-- If a slice touches shared/public surfaces, flag rollout risk inline — do not invoke a separate skill.
-- If a slice represents a weighty, hard-to-reverse decision, stress-test assumptions inline — do not invoke a separate skill.
-- Model/profile suggestions are advisory text carried over from `/estimate` — never claim to switch models automatically.
-- Execution approval (auto-continue vs. confirming before each change) follows the session's own permission mode — `next` doesn't override it.
-- Do not re-explain the repository or the plan on every call — assume context is already known.
+## Output (in Russian)
 
-## Output
+Simple summary of where the task is and what to do next.
 
-Exactly one state. Keep it short.
+Example:
+```
+Task: TASK-001 — User list
 
-### READY
-```
-Task: <id> — <title>
-State: READY
-Slice: <id/name> (<n>/<total>)
-Goal: <one line>
-Scope: <files/areas — omit if obvious from Goal>
-Covers: <acceptance criterion id(s) this slice targets — omit if none>
-Verification: <criteria from the slice map>
-Model: <suggested profile — omit if not useful>
-Estimate: <story points, from the slice map>
-Do not touch: <only if relevant>
-```
-Ready to execute.
+Статус: READY
+Срез: 1/3 — List endpoint
+Что проверяем: pagination, error handling
+Готово к реализации.
 
-### VERIFYING
+Следующий шаг: implement
 ```
-Task: <id> — <title>
-State: VERIFYING
-```
-One line: what was implemented and that `/verify` should confirm it.
 
-### BLOCKED
-```
-Task: <id> — <title>
-State: BLOCKED
-```
-State plainly: what's blocking, why it's required, and the exact action/input that unblocks it. Never invent credentials, access, or infrastructure.
-
-### RECOVERABLE
-```
-Task: <id> — <title>
-State: RECOVERABLE
-```
-One line: what failed and why it's local.
-Next: `/debug` → `/verify`.
-
-### REPLAN_REQUIRED
-```
-Task: <id> — <title>
-State: REPLAN_REQUIRED
-Reason: <assumption that broke>
-```
-Next: `/plan` → `/estimate`.
-
-### COMPLETE
-```
-Task: <id> — <title>
-State: COMPLETE
-Acceptance: <n>/<n> criteria verified
-```
-One line: all criteria verified, recommend final `/verify` and `/review`.
+Other states:
+- `VERIFYING` — slice implemented, ready for `/verify`
+- `BLOCKED` — something external is needed (name it clearly)
+- `COMPLETE` — all criteria verified, ready for `/review`
+- `RECOVERABLE` — test/type failure, needs `/debug`
+- `REPLAN_REQUIRED` — plan assumption broke, needs `/plan`

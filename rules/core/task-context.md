@@ -22,7 +22,7 @@ task_id: TASK-NNN
 title: <short title>
 project: <slug — only needed once TASK_CONTEXT_ROOT is a shared external vault>
 status: READY | EXECUTING | VERIFYING | BLOCKED | RECOVERABLE | REPLAN_REQUIRED | COMPLETE
-phase: clarify | design | creative-explore | plan | estimate | implement | verify | design-review | review
+phase: new | clarify | design | creative-explore | plan | estimate | implement | verify | design-review | review
 priority: <optional, human-set>
 creative_autonomy: HIGH | MEDIUM | LOW <optional, human-set, default HIGH — see rules/frontend/design.md and skills/creative-explore/SKILL.md>
 execution_mode: MANUAL | SUPERVISED | AUTONOMOUS <optional, human-set — unset behaves exactly as before this field existed (AUTONOMOUS); see rules/core/execution-state.md's Execution mode section and skills/execute/SKILL.md>
@@ -95,6 +95,12 @@ Per-criterion `Evidence`/`Verified at` is the only evidence store — there is d
 
 `Requirement:` and `Result:` are two independently-owned axes on the same criterion, exactly as `rules/core/execution-state.md` defines — never conflate them, and never let implementation proceeding silently promote `Requirement` to `CONFIRMED`.
 
+`phase` starts at `new` the moment a task file is created — never `null`, never a free-form sentinel invented ad hoc (e.g. `INITIATE`). It advances only when a phase-owning skill actually persists that phase's required output; see `rules/core/execution-state.md`'s Phase transitions section for the full sequence and which skill is responsible at each step.
+
+## Language
+
+Task file body content (Objective, Scope, Acceptance Criteria descriptions, Decisions, and other free text) is written in Russian. Frontmatter field names, enum values (`status`, `phase`, `READY`, `new`, …), and structural ids (`AC-NNN`, `S1`, `DEC-NNN`, event types) always stay in English regardless of body language, so every skill parses them identically.
+
 ## Ownership
 
 - **Human-controlled** — Claude proposes only when explicitly asked, never silently overwrites: `title`, `priority`, `creative_autonomy`, `execution_mode`, Objective, Business Context, Constraints, Human Overrides.
@@ -109,7 +115,7 @@ Before acting, re-read the task file fresh off disk — never rely on what the c
 
 ## Reconciliation
 
-Every skill that touches the task file reconciles first — see `rules/core/common-rules.md`. Load context per `rules/core/context-pack.md` for the current stage, not the full file unless needed.
+Every skill that touches the task file reconciles first — see `rules/core/common-rules.md`. Before acting, re-read the file fresh off disk to detect human edits or repository changes that affect the task's validity.
 
 ## Staleness
 

@@ -9,20 +9,18 @@ Report execution state exactly as recorded in each task's Task Context file. Nev
 
 ## Rules
 
-- Read-only. Do not modify any file.
-- Read from the task file(s) under the resolved `TASK_CONTEXT_ROOT` (per `rules/core/task-context.md`) — one task with `/status TASK-NNN`, all of them for a bare `/status` (glob for `TASK-*.md`, read each frontmatter). For frontmatter field names, see `rules/core/task-context.md`'s Schema section; for the `Last action` line, see `rules/core/execution-state.md`'s Execution History format section specifically — never the whole file, and never its Supervisor decision model.
-- This is a Control Plane operation per `rules/core/lifecycle-planes.md`: a single mechanical read-and-report turn. No repository investigation beyond the glob-and-read above, no spawning subagents/background agents, no invoking the Supervisor decision model.
-- If the resolved task root doesn't exist, or has no tasks, say so plainly — don't infer or fabricate a task.
-- Report only what's actually recorded. Never guess at a blocker, slice count, or next action that isn't in the file.
-- Given `/status TASK-NNN` for an id with no matching task file, say so — don't invent one.
-- Keep output minimal — this is a status check, not an analysis.
+- Read-only. Just read and report, no changes.
+- Read task files from `.ai/tasks/` (or resolved root). One task: `/status TASK-NNN`. All tasks: bare `/status`.
+- Report only what's in the file: status, phase, current slice, criteria verified, blockers.
+- If task root doesn't exist or is empty, say so.
+- Keep output short — this is a status check, not analysis.
 
 ## Output
 
 ### One task
 `/status TASK-NNN`, or `/status` when exactly one task exists.
 ```
-<id> — <title>
+Task: <id> — <title>
 State: <state>
 Current slice: <n/total, or "n/a">
 Acceptance: <n>/<m> criteria verified — omit if none recorded
