@@ -28,17 +28,23 @@ Manual-reasoning checks (this toolkit has no automated skill runner — same sty
 **Expected classify output:** `research_required: true`, `research_areas: ["existing /users endpoint implementation", "routing/controller pattern"]` — generic, no invented file names.
 
 **Expected `/research` behavior:**
-- Scope comes from classify's `research_areas` (no task file yet, per Scope's priority order).
-- Searches directly (Bash/Grep/Read in main-agent context) for the `/users` route, its controller/handler, and surrounding conventions — not a subagent, since this is one small, non-independent area.
-- Reads only the files actually relevant to that one endpoint and its immediate pattern (route file, handler, maybe a schema/model file) — not the whole `routes/` or `controllers/` directory.
-- Persists Facts (e.g., "routes are thin, delegate to a service layer") and Patterns (e.g., "each resource has `routes/<name>.ts` + `services/<name>.ts`") to `Research Notes`; anything genuinely ambiguous (e.g., whether `/orders` needs the same auth middleware) becomes an `Open Question`.
-- `/clarify` then only asks about what research left open (e.g., the auth-middleware question) — it does not re-ask "how are existing endpoints structured," since `Research Notes` already answers that.
-- `/plan` reuses `Research Notes` for the affected-files/pattern step instead of re-searching.
+1. Auto-detects or reads task from TASK-001 (created by classify earlier)
+2. Reads `research_areas` from the task's Strategy: ["existing /users endpoint implementation", "routing/controller pattern"]
+3. Decides: both areas are interdependent (routing IS the pattern) — spawns a single subagent covering both, briefed with the `/users` route/handler/convention question
+4. Subagent searches (Bash/Grep/Read) for the `/users` route, handler, and conventions, reading only relevant files (route file, handler, schema/model) — not whole directories — and returns raw findings as text
+5. Main agent synthesizes the subagent's findings
+6. **Saves to task file** under `Comprehension Tips` section:
+   - Facts: "routes are thin, delegate to service layer" (`routes/users.ts:15`)
+   - Patterns: "each resource has `routes/<name>.ts` + `services/<name>.ts`"
+   - Open Questions (if any): "whether `/orders` needs auth middleware" (Q-001)
+7. Reports findings to user in same format
 
 **Negative assertions:**
-- No subagent spawned — one small area, handled inline.
-- Chain includes `research` before `clarify`: `research → clarify → plan → implement → verify` — no unnecessary `design`/`creative-explore` (backend-only), no elevated verification (no stated risk/complexity driver).
-- `/plan` does not redo step 2-4 file discovery for what `Research Notes` already covered.
+- Only one subagent spawned — areas are interdependent, so no parallel split
+- Main agent's own context never runs Bash/Grep/Read directly for this
+- Task file is updated with Comprehension Tips (not a separate Research Notes section)
+- `/clarify` only asks about Q-001 (what research left open)
+- `/plan` reads Comprehension Tips instead of re-searching
 
 ---
 
@@ -49,7 +55,7 @@ Manual-reasoning checks (this toolkit has no automated skill runner — same sty
 **Expected classify output:** `research_required: true`, `clarification_required: true`, `planning_required: true`, `verification_level: elevated`. `research_areas` stays generic (e.g., "current billing calculation logic", "recent related bug fixes/edge cases") — classify does not guess which function or file is wrong.
 
 **Expected `/research` behavior:**
-- Investigates the billing calculation code directly, reads it, and states as Facts only what the code actually does (e.g., "rounding happens before tax is applied in `calculate_total`") — never states *why* it's wrong or what the intended behavior should be as fact.
+- The two areas are related (both about the same billing code path), so a single subagent is spawned to read the billing calculation code and return raw findings. Main agent states as Facts only what the code actually does (e.g., "rounding happens before tax is applied in `calculate_total`") — never states *why* it's wrong or what the intended behavior should be as fact.
 - Anything about intended/correct behavior that the code doesn't itself answer (business rule, edge case handling, whether the bug is a race condition vs. a logic error) is recorded as an `Open Question`, not guessed.
 - Distinguishes clearly: current (observed) behavior = Fact; correct/intended behavior = Open Question for a human, unless unambiguous from code/tests/comments.
 - Does not propose a fix — that's `/plan`'s and implementation's job.
@@ -81,21 +87,42 @@ strategy:
 Note: `research_areas` names *topics* only — never a concrete class, library, or storage service. Classify has not read the repo and must not invent that e.g. `MediaStorage` or `Pillow` exists.
 
 **Expected `/research` behavior:**
-- For each area, identifies the relevant part of the repo (e.g., `models/user.py`, any existing `upload`/`media` module, storage config).
-- Discovers and records the *actual* repository-specific facts classify could not have known — e.g. "profile data lives in `User` model, no image field yet," "an `S3Storage` helper already exists and is used by `Document` uploads," "Pillow is already a dependency" — each tagged with the file/module it came from.
-- If the areas are genuinely independent and substantial (e.g., "storage backend" vs. "profile model" vs. "existing upload validation conventions" are three separate subsystems), may delegate one area per subagent — stating briefly why — with subagents returning raw findings only; this agent alone writes `Research Notes`.
-- Persists Facts/Patterns/Implications; anything the repo doesn't resolve (e.g., max file size policy, whether resizing is required) becomes an `Open Question` for `/clarify`.
+1. Auto-detects or reads TASK-002 created by classify
+2. Reads `research_areas`: ["existing file/media upload handling", "user profile data model", "image storage approach"]
+3. **Decides parallelization**: "storage approach" is independent from "profile model" and "upload handling" — spawns two subagents: one for storage, one covering profile model + upload handling together. States: "Распределено на 2 параллельных investigator'ов: image storage approach; user profile data model + existing upload handling"
+4. **Subagent A** investigates profile model + upload handling:
+   - Profile model: finds `models/user.py`, notes "no image field yet"
+   - Upload handling: finds existing `Document` upload pattern, discovers `S3Storage` helper
+5. **Subagent B** investigates storage in parallel and returns findings (raw text)
+6. **Main agent synthesizes**: merges both subagents' findings, deduplicates
+7. **Saves to task file** `Comprehension Tips`:
+   - Facts: "User model, no image field yet" (`models/user.py:42`), "S3Storage helper exists" (`storage/s3.py:1-50`), "Pillow is dependency" (`requirements.txt`)
+   - Patterns: "uploads use Document → S3Storage pattern" (`uploads/document.py`)
+   - Open Questions: Q-001: "Max file size policy?", Q-002: "Resize before upload?" (both Affects: image storage)
 
 **Negative assertions:**
-- Classify's `research_areas` contain no file names, class names, or specific library names — those only appear after `/research` runs.
-- If subagents are used, they never write the task file directly — only the main `/research` invocation does.
-- `/plan` does not start repository exploration from scratch for storage/profile-model — it reads `Research Notes` first.
+- Classify's `research_areas` are generic, not invented file names
+- Main agent's own context never runs Bash/Grep/Read directly for this — both clusters go through subagents
+- Subagents never write task file — only main research does
+- `/clarify` does not re-explore storage/profile after research completes
 
 ---
 
 ## How to check
 
-1. Run `/classify` on each task description; confirm `research_required`/`research_areas` match the expected shape above (generic hints, no invented specifics) and that `research_mode` does not appear anywhere in the output.
-2. Where research is required, run `/research` and confirm: scope matches what classify/task file provided, only relevant files were read (ask it to state what it read), Facts are grounded and cite a file/module, uncertain items are Open Questions not Facts, and subagents (if any) were justified and did not write the task file themselves.
-3. Run `/clarify` afterward and confirm it does not re-ask anything `Research Notes` already answered.
-4. Run `/plan` afterward and confirm its Changes/affected-files reasoning cites `Research Notes` rather than re-deriving them.
+1. **Classify phase**: Run `/classify` on each task; confirm `research_required`/`research_areas` match expected shape (generic hints, no invented file names).
+
+2. **Research phase**: Run `/research` (or `/research TASK-NNN`); confirm:
+   - Scope matches task's `research_areas`
+   - Only relevant files were read
+   - Facts are grounded and cite files/modules
+   - Uncertain items are Open Questions (Q-NNN), not Facts
+   - At least one subagent was spawned (main agent never investigates directly); subagent count (1 vs. parallel) is justified by area independence, and each returns raw text only
+   - **Main agent writes the task file** under `Comprehension Tips` section
+   - Output report matches the saved facts/patterns/questions
+
+3. **Idempotency**: Run `/research TASK-NNN` again; confirm it reports "Компрехеншены tips уже полные — новых фактов не найдено." without re-investigating.
+
+4. **Clarify phase**: Run `/clarify` afterward; confirm it does not re-ask anything already in Comprehension Tips (only asks about Open Questions or new uncertainties).
+
+5. **Plan phase**: Run `/plan` afterward; confirm it reads Comprehension Tips for patterns/facts instead of re-exploring those areas.
