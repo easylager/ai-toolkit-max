@@ -14,7 +14,7 @@ Turn the current business request into a draft Acceptance Contract: candidate ac
 - When creating the task file, append a `TASK_CREATED` `Execution History` event; either way, append `PHASE_STARTED` at the start of this pass. Once the criteria are actually persisted, append `PHASE_COMPLETED` and set `phase: clarify` in frontmatter. If the pass ends without reaching that point (e.g. stopped short because a blocking `UNKNOWN` needs a human answer first), append `HUMAN_GATE` instead before ending the turn — never leave a `PHASE_STARTED` with no matching close (`rules/core/common-rules.md`'s Blocked or incomplete runs still write history).
 - Do not invent business requirements — an inferred criterion is a hypothesis to confirm, never a decision.
 - Use the existing repository context when relevant.
-- If the task file already has `Research Notes` or research-sourced `Open Questions` (`rules/core/task-context.md`), treat them as established context — don't re-derive facts `/research` already found, and don't re-ask a question it already answered. Only genuinely unresolved items become clarify questions; if `/research` left an open question still relevant, carry it forward rather than duplicating it.
+- If the task file already has `Comprehension Tips` or research-sourced `Open Questions` (`rules/core/task-context.md`), treat them as established context — don't re-derive facts `/research` already found, and don't re-ask a question it already answered. Only genuinely unresolved items become clarify questions; if `/research` left an open question still relevant, carry it forward rather than duplicating it. If `Comprehension Tips` fully answers what would otherwise need research (e.g. an `UNKNOWN` criterion's ambiguity is actually a repo fact, not a business decision), resolve it from there instead of raising a question.
 - If an external system plausibly holds the authoritative requirement (a Linear/Jira/GitHub issue, a Notion spec) and is available in this session, retrieve it before drafting criteria or questions — see `rules/core/capabilities.md`. Never invent access to a system that isn't configured; if the likely source is unavailable, say so only if it materially affects confidence in the draft.
 - For each candidate acceptance criterion, classify its requirement status:
   - `CONFIRMED` — explicitly stated by the requester.
@@ -25,6 +25,7 @@ Turn the current business request into a draft Acceptance Contract: candidate ac
 - Turn each `UNKNOWN` and each open decision into a targeted question aimed at the inference, not a blank prompt — "I inferred X, is that right?" rather than "what should happen?". Reference which criterion(s) or missing criterion each question affects.
 - If an `UNKNOWN` criterion would block safe implementation (behavior materially diverges depending on the answer), say so plainly rather than guessing or picking a default.
 - Avoid exhaustive checklists. Prefer 3-7 high-value criteria and questions over a long list.
+- If compressing to the highest-value items still leaves more than ~7 genuinely open questions/`UNKNOWN`s (the request itself is broad or fuzzy, not just under-specified in one spot), don't dump the full list in one message. Persist what's already been drafted as usual, then in the output recommend going through the rest one at a time instead — name `grilling` (mattpocock-skills plugin, if installed) as a good fit for that, since it's built for exactly this: interactively stress-testing a fuzzy plan down a decision tree. This is a suggestion, never a hard handoff — `/clarify` doesn't invoke it or depend on it existing; if the user doesn't have it, offer to just go one question at a time in this chat instead.
 - If the request is already sufficiently clear — criteria confirmed, no material open questions — say so and skip the sections that would otherwise be empty.
 
 ## Output (in Russian)
@@ -45,3 +46,8 @@ Brief summary of what's clear and what's open:
 - Edge case description
 
 If all requirements are confirmed and no questions block implementation, say so.
+
+If too many open questions remain (see Rules), show only the highest-value 3-7 as above, then close with, e.g.:
+```
+Ещё N вопросов открыто — многовато для одного захода. Разберём по одному через /grilling, или прямо здесь по очереди?
+```

@@ -6,7 +6,7 @@ For shared skill constraints, see `rules/core/common-rules.md`.
 
 ## Tasks
 
-Stable ids: `TASK-001`, `TASK-002`, … — allocated by `/plan` or `/clarify`, never reused. No id for trivial one-offs.
+Stable ids: `TASK-001`, `TASK-002`, … — allocated by `/plan`, `/clarify`, `/classify`, or `/task`, never reused. No id for trivial one-offs.
 
 A task is **active** if status ≠ `COMPLETE`. `/next` and `/status` resolve by id or ask if ambiguous.
 
@@ -48,7 +48,9 @@ Workflow sequence. `phase` starts at `new` and advances when the owning skill pe
 
 `design` and `creative-explore` happen alongside `plan` for UI work — see `rules/frontend/design.md`.
 
-`research` doesn't own a phase either: it can run any time before or during `clarify`/`plan`, and repeat later for one new targeted question, without advancing `phase`. It persists straight to `Research Notes`/`Open Questions` (`rules/core/task-context.md`).
+`research` doesn't own a phase either: it can run any time before or during `clarify`/`plan`, and repeat later for one new targeted question, without advancing `phase`. It persists straight to `Comprehension Tips`/`Open Questions` (`rules/core/task-context.md`).
+
+`classify` doesn't own a phase either: it's the entry point, run before `clarify`, and persists straight to `Strategy` (`rules/core/task-context.md`) without advancing `phase` past `new`.
 
 A skill sets `phase` **only** when it persists that phase's output. `/next` and `/status` never change phase.
 
@@ -77,6 +79,18 @@ Example:
 ```
 
 Keep last 20 entries; older entries are less useful.
+
+## Autonomy
+
+**What makes an `UNKNOWN` criterion block safe implementation** (Human Gate #1, Requirements): behavior would materially diverge depending on the answer — not every open question qualifies, only ones where guessing risks building the wrong thing. `/clarify` and `/next` apply this test the same way (`skills/clarify/SKILL.md`).
+
+**Checkpoint frequency** — a separate axis from Human Gates, controlled by `execution_mode` (task frontmatter — `rules/core/task-context.md`, human-controlled, optional; unset behaves as `AUTONOMOUS`). It governs only how often `/execute` pauses the automation loop to report and wait, on top of — never instead of — the four Human Gates, which always apply regardless of mode:
+
+- **`AUTONOMOUS`** (default) — no checkpoint beyond the four Human Gates. A `RECOVERABLE` failure routes to `/debug` → `/verify` automatically. `/execute` can run every remaining slice in one pass, stopping only at a gate or `COMPLETE`.
+- **`SUPERVISED`** — checkpoint after each slice: once a slice's criteria are `VERIFIED`, `/execute` reports progress and stops before starting the next slice. A `RECOVERABLE` failure still auto-routes to `/debug` within the current slice — only the boundary *between* slices pauses.
+- **`MANUAL`** — checkpoint before each slice starts, and before each `/debug` attempt on a `RECOVERABLE` failure — every step needs an explicit go-ahead to proceed.
+
+A checkpoint is not a Human Gate: it never sets `status: BLOCKED` and needs no `Blockers` reason — it's a pause in the automation loop, resolved simply by the user re-invoking `/execute` to continue, not a stuck state requiring a decision. `/next`, used standalone outside `/execute`, always reports a single next action regardless of `execution_mode` — the mode only governs how far `/execute`'s own loop runs before stopping to report (`skills/execute/SKILL.md`, `skills/next/SKILL.md`).
 
 ## Principles
 

@@ -1,53 +1,69 @@
-# Using the Updated Classify Skill
+# Using Classify
 
 ## Overview
 
-The updated `classify` skill now provides:
+`classify` is the workflow entry point. It analyzes a task description and recommends the minimum-necessary strategy — then, if that strategy needs persistent state, creates or updates the task's Task Context file (`.ai/tasks/TASK-NNN.md`, per `rules/core/task-context.md`) and writes the strategy into its `Strategy` section.
 
-1. **Task Profile** — qualitative assessment of task characteristics (complexity, uncertainty, risk, etc.)
-2. **Recommended Strategy** — YAML structure with flags for `state_required`, `research_required`, `research_areas`, etc.
-3. **Workflow Chain** — the minimum-necessary sequence of skills/implement to solve the task
-
-## Key Insights from Strategy Output
+## Strategy fields
 
 ### `state_required`
-- `false`: Task is simple and self-contained; no need to create `.ai/task-*.md` context file
-- `true`: Task needs persistent state to track research findings, decisions, or complex workflow steps
+- `false`: trivial task — no task file is created at all (`rules/core/execution-state.md`: "Create `.ai/` lazily").
+- `true`: task needs a persisted Task Context file — `classify` creates/updates it and writes `Strategy`.
 
 ### `research_required`
-- `false`: Task description is complete; can proceed directly to planning or implementation
-- `true`: Need to study repository structure, patterns, or implementation details — `/research` runs next
+- `false`: task description is complete; proceed directly to planning or implementation.
+- `true`: repository structure/patterns/implementation details are uncertain — `/research` runs next.
 
 ### `research_areas` (only if `research_required: true`)
-Conceptual hints about what's uncertain, not a file/class/technology list — `/research` is what discovers those:
+Conceptual hints about what's uncertain, never a file/class/technology list — `/research` discovers those:
 - Topic types (e.g., "error handling patterns")
 - Architectural aspects (e.g., "dependency graph")
 - Implementation concerns (e.g., "migration strategy")
 
 `/research` itself decides whether an area is investigated directly or delegated to a subagent — classify never predicts this.
 
-### `planning_required`
-- `false`: Can go directly from clarification (if needed) to implementation
-- `true`: Task warrants structured planning via `/plan` skill
-
 ### `clarification_required`
-- `false`: Task description is clear; skip `/clarify`
-- `true`: Task has ambiguities; run `/clarify` before planning/implementation
+- `false`: task is clear; skip `/clarify`.
+- `true`: task has ambiguities; run `/clarify` before planning/implementation.
+
+### `planning_required`
+- `false`: go directly from clarification (if any) to implementation.
+- `true`: task warrants a structured plan via `/plan`.
 
 ### `verification_level`
-- `"standard"`: Normal verification via `/verify` (functional testing, smoke tests)
-- `"elevated"`: Extra scrutiny needed due to risk, complexity, or impact (security-sensitive code, refactors, payment systems, migration, etc.)
+- `standard`: normal `/verify` (functional testing, smoke tests).
+- `elevated`: extra scrutiny — security-sensitive code, refactors, payment systems, migrations.
 
-## Workflow Example
+## Examples
 
-For a **medium-complexity logging task**:
-- Classify recommends: `research → clarify → plan → implement → verify`
-- `state_required: true` means we create `.ai/task-*.md` and track research findings there
-- `research_required: true` with `research_areas: [error handler implementation, logging patterns]` means `/research` investigates those areas and persists a compact summary to `Research Notes`
-- `planning_required: true` means `/plan` structures the approach before implementation, reusing what `/research` already found
+### Trivial task — no task file
+```
+/classify "fix typo in README"
+→ state_required: false — nothing persisted
+→ Chain: implement → verify
+```
 
-## Next Steps
+### Medium task
+```
+/classify "add email notifications to alert system"
+→ Creates TASK-001, writes Strategy:
+    research_required: true, research_areas: [alert dispatch mechanism, email service integration patterns]
+    clarification_required: true, planning_required: true
+→ Chain: research → clarify → plan → implement → verify
+→ Run with: /execute TASK-001
+```
 
-1. Test classify on real tasks (see `test-cases.md` for examples)
-2. Verify that strategy recommendations align with actual task difficulty
-3. Once confident, integrate strategy output into task creation workflow (`.ai/task-*.md` header)
+### Complex task
+```
+/classify "refactor auth middleware to comply with new token storage requirements"
+→ Creates TASK-002, verification_level: elevated
+→ Chain: research → clarify → plan → implement → review → verify
+→ Run with: /execute TASK-002
+```
+
+## How later phases use it
+
+- `/research` reads `Strategy`'s `research_areas`, investigates, writes `Comprehension Tips`.
+- `/clarify` reads `Comprehension Tips` before asking questions — doesn't re-ask what's already answered.
+- `/plan` reads `Comprehension Tips` before searching the repo — doesn't re-derive what's already known.
+- `/execute TASK-NNN` reads `Strategy`'s chain to decide which skill runs next, phase by phase.

@@ -25,7 +25,7 @@ status: READY | EXECUTING | VERIFYING | BLOCKED | RECOVERABLE | REPLAN_REQUIRED 
 phase: new | clarify | design | creative-explore | plan | estimate | implement | verify | design-review | review
 priority: <optional, human-set>
 creative_autonomy: HIGH | MEDIUM | LOW <optional, human-set, default HIGH — see rules/frontend/design.md and skills/creative-explore/SKILL.md>
-execution_mode: MANUAL | SUPERVISED | AUTONOMOUS <optional, human-set — unset behaves exactly as before this field existed (AUTONOMOUS); see rules/core/execution-state.md's Execution mode section and skills/execute/SKILL.md>
+execution_mode: MANUAL | SUPERVISED | AUTONOMOUS <optional, human-set — unset behaves exactly as before this field existed (AUTONOMOUS); see rules/core/execution-state.md's Autonomy section and skills/execute/SKILL.md>
 created_at: <date>
 updated_at: <date>
 branch: <optional>
@@ -41,9 +41,10 @@ pr: <optional>
 ## Scope
 ### In Scope
 ### Out of Scope
-## Research Notes
+## Strategy
+## Comprehension Tips
 ### Facts
-### Relevant Patterns
+### Patterns
 ### Implications
 ## Acceptance Criteria
 ### AC-NNN
@@ -97,7 +98,9 @@ Status: READY | EXECUTING | VERIFYING | DONE
 
 Per-criterion `Evidence`/`Verified at` is the only evidence store — there is deliberately no separate top-level "Evidence" section duplicating it. `Decisions` inside the task file replaces the old `.ai/decisions.md` "tag each entry with its task id" convention: the file itself is already scoped to one task.
 
-`Research Notes` is `/research`'s output — compact, repository-grounded knowledge, not a transcript (no list of files opened, commands run, or dead ends). Unlike `Acceptance Criteria`/`Edge Cases`/`Decisions`, its entries don't carry `NNN` ids: they're not independently tracked or verified, just context later phases read. Anything uncertain belongs in `Open Questions`, not `Facts` — `/research` reuses that section's existing `Q-NNN` convention rather than a separate one.
+`Strategy` is `/classify`'s output — the recommended workflow (state/research/clarification/planning needs, verification level, `research_areas`) persisted as the YAML block `skills/classify/SKILL.md` defines, plus the resulting skill chain. `/execute` and other skills read it as a hint, never a hard gate — a later phase can still turn out to need more (or less) than classify predicted. Classify doesn't own a workflow `phase` (see `rules/core/execution-state.md`); writing `Strategy` never advances `phase` past `new`.
+
+`Comprehension Tips` is `/research`'s output — compact, repository-grounded knowledge, not a transcript (no list of files opened, commands run, or dead ends). Unlike `Acceptance Criteria`/`Edge Cases`/`Decisions`, its entries don't carry `NNN` ids: they're not independently tracked or verified, just context later phases (`clarify`, `plan`, `estimate`) read instead of re-deriving. Anything uncertain belongs in `Open Questions`, not `Facts` — `/research` reuses that section's existing `Q-NNN` convention rather than a separate one.
 
 `Requirement:` and `Result:` are two independently-owned axes on the same criterion, exactly as `rules/core/execution-state.md` defines — never conflate them, and never let implementation proceeding silently promote `Requirement` to `CONFIRMED`.
 
@@ -110,7 +113,7 @@ Task file body content (Objective, Scope, Acceptance Criteria descriptions, Deci
 ## Ownership
 
 - **Human-controlled** — Claude proposes only when explicitly asked, never silently overwrites: `title`, `priority`, `creative_autonomy`, `execution_mode`, Objective, Business Context, Constraints, Human Overrides.
-- **Shared** — Claude proposes, a human edit is authoritative: Acceptance Criteria, Edge Cases, Decisions, Test Strategy, Assumptions, Scope, Research Notes, Open Questions.
+- **Shared** — Claude proposes, a human edit is authoritative: Acceptance Criteria, Edge Cases, Decisions, Test Strategy, Assumptions, Scope, Strategy, Comprehension Tips, Open Questions.
 - **AI-managed** — Claude writes; a human can still hand-edit (e.g. to unblock): `status`, `phase`, Slices, Progress, Blockers, Next Action, Execution History.
 
 Human edits always take precedence over an AI assumption or proposal. A human edit that directly contradicts something required elsewhere in the file is never silently resolved either way — surface it as an Open Question or `BLOCKED` reason instead of guessing which side wins.
