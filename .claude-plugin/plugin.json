@@ -1,7 +1,7 @@
 {
   "name": "ai-toolkit-max",
-  "version": "3.3.1",
-  "description": "Lifecycle toolkit: project dashboard + decisions, task context, clarify/plan/estimate, execute/verify/review, design pipeline. 18 skills — no setup/advisory overhead.",
+  "version": "3.4.0",
+  "description": "Lifecycle toolkit: project dashboard + decisions + decompose, task context, clarify/plan/estimate, execute/verify/review, design pipeline. 19 skills — no setup/advisory overhead.",
   "author": {
     "name": "easylager"
   }

@@ -11,7 +11,7 @@ A small, stateful toolkit for Claude Code. One persistent task file. Simple work
     ↑
     │ read/write
     │
-  skills (project · decide | task · clarify · research · plan · estimate · execute · verify · review)
+  skills (project · decide · decompose | task · clarify · research · plan · estimate · execute · verify · review)
     ↑
     │ use to manage work
     │
@@ -20,10 +20,10 @@ A small, stateful toolkit for Claude Code. One persistent task file. Simple work
 
 - **Project file** — one-screen dashboard: stage, goal, next, blockers, task graph. Only when a project spans several tasks.
 - **Task file** — persistent record of requirements, plan, progress, decisions.
-- **Skills** — `/project`, `/decide`, `/research`, `/clarify`, `/plan`, `/estimate`, `/execute`, `/verify`, `/review` — read state, do work, update state, report result.
+- **Skills** — `/project`, `/decide`, `/decompose`, `/research`, `/clarify`, `/plan`, `/estimate`, `/execute`, `/verify`, `/review` — read state, do work, update state, report result.
 - **Rules** — engineering principles pulled into your project's `CLAUDE.md`.
 
-Two levels, same idea. A single task: `/classify` → `/clarify` → `/plan` → `/estimate` → `/execute`. A whole project: `/project` walks five questions — *что строим → как должно работать → как построим → как убедимся, что работает → что дальше* — and hands each node of its task graph to that same task workflow.
+Two levels, same idea. A single task: `/classify` → `/clarify` → `/plan` → `/estimate` → `/execute`. A whole project: `/project` walks five questions — *что строим → как должно работать → как построим → как убедимся, что работает → что дальше* — and recommends the single next step, including when the project is ready for `/decompose` to turn it into a capability graph; you run that step yourself, then `/project` hands each `READY` node to that same task workflow.
 
 Typical workflow: `/research` (if needed) → `/clarify` → `/plan` → `/estimate` → `/execute` (which chains phases until done, or you invoke skills individually). `/research` can repeat later for one targeted follow-up question — see [Skills](#skills).
 Minimal, human-readable, easy to resume after an interruption.
@@ -76,8 +76,9 @@ Twenty-one skills, each a distinct mode of work rather than a fixed pipeline sta
 
 | Skill | Use it when |
 |---|---|
-| `/project` | Any time you want to know where the project is. Reports the current stage, the five questions, and the single next action — then takes that step: `DISCOVER` a goal, route a blocking choice to `/decide`, `DECOMPOSE` into a capability graph, hand a `READY` node to the task workflow, aggregate `VERIFY` results, or name what `HARDEN` still needs. Its only state is `.ai/project.md`, deliberately one screen long. |
-| `/decide` | A choice has a real trade-off, is hard to reverse, or changes architecture — never for an implementation detail with one obvious answer. Produces a Decision Card — question, one recommendation, 2-3 reasons, 1-2 real alternatives when they exist, one trade-off — with a comparison matrix only when the trade-off is genuine. Stays `PROPOSED` until you pick: the agent proposes, you decide. |
+| `/project` | Any time you want to know where the project is. Reports the current stage, the five questions, and the single next action — read/analyse/recommend only, it never runs that action itself: names a `DISCOVER` gap, points a blocking choice at `/decide`, checks the `DECOMPOSE` readiness gate and either shows what's still missing or says the project is ready for `/decompose`, recommends which `READY` node to hand the task workflow, aggregates `VERIFY` results, or names what `HARDEN` still needs. Its only state is `.ai/project.md`, deliberately one screen long. |
+| `/decide` | A choice has a real trade-off, is hard to reverse, or changes architecture — never for an implementation detail with one obvious answer, and not limited to technology picks (a failure-handling policy counts too). Produces a Decision Card — question, one recommendation, 2-3 reasons, 1-2 real alternatives when they exist, one trade-off — with a comparison matrix only when the trade-off is genuine. Stays `PROPOSED` until you pick: the agent proposes, you decide. |
+| `/decompose` | `/project` says the project is ready. Turns it into a capability/vertical-slice graph (`Task Graph`) — behaviour nodes, never files or technical tasks; the technical breakdown happens later, inside each node's own `/plan`. Re-checks the readiness gate itself and refuses (showing the gaps) rather than decomposing on a guess. Runs only when you invoke it — `/project` never does. |
 
 **ENTRY** — decide how much process the task deserves.
 
@@ -153,7 +154,7 @@ When work spans more than one task, `/project` keeps a single dashboard at `.ai/
 
 ```
 .ai/
-├── project.md      # stage · goal · next · blockers · open questions · decisions index · task graph
+├── project.md      # stage · goal · flow · next · blockers · open questions · decisions index · verification · task graph
 ├── decisions.md    # PDEC-NNN Decision Cards
 └── tasks/
     └── TASK-003.md # one node of the graph, once work on it starts
@@ -173,22 +174,29 @@ DISCOVER → DECIDE → DECOMPOSE → EXECUTE → VERIFY → HARDEN
 - **A node becomes a task lazily.** Only when work starts does it get a `TASK-NNN.md`; from then on the task file is authoritative and the node's status is a derived mirror, never maintained twice.
 - **Nothing accumulates.** Stale entries are overwritten, not appended beside their replacement. Detail lives in the task file, decision rationale in `.ai/decisions.md`, nothing in between.
 - **Every technology and architecture decision is the human's.** `/decide` writes `PROPOSED`; only your choice makes it `ACCEPTED`. A project Human Gate exists exactly where a decision is hard to reverse, risky, architectural, or has a real trade-off — and nowhere else.
+- **`DECOMPOSE` needs more than an accepted tech stack.** `/project` checks a readiness gate — what, behaviour (incl. edge cases), architecture decisions, verification strategy, MVP scope — before saying the project is ready. Only `/decompose`, run by you, actually writes the graph; `/project` recommends it and stops.
 - **Project `VERIFY` aggregates, never re-verifies.** It reads the acceptance results already recorded by `/verify` in the task files.
 - **Replanning changes the graph.** A node hitting `REPLAN_REQUIRED` means nodes get split, added, or dropped — not patched around.
 
 ```
 /project
-  DECOMPOSE
+  Стадия: DECIDE
 
-  - [x] Что строим?
-  - [x] Как должно работать?
-  - [ ] Как построим?   ←
-  - [ ] Как убедимся, что работает?
-  - [ ] Что дальше?
+  Как построим?
+  [x] Backend: FastAPI · Frontend: React · внешний API timeout → controlled error
 
-  Граф готов: AUTH-01, API-01, UI-01 — READY.
+  Как убедимся, что работает?
+  [x] backend mapping tests · frontend error states · E2E happy path
 
-  Дальше: AUTH-01 → /classify
+  Статус: READY FOR DECOMPOSE
+  Что дальше? Запустить `/decompose`.
+
+/decompose
+  Граф: AUTH-01, API-01, UI-01 — READY
+
+/project
+  Стадия: DECOMPOSE
+  Что дальше? `/classify` для AUTH-01.
 ```
 
 ## Execution state
@@ -356,6 +364,7 @@ tests/
 skills/
   project/SKILL.md
   decide/SKILL.md
+  decompose/SKILL.md
   classify/SKILL.md
   execute/SKILL.md
   task/SKILL.md

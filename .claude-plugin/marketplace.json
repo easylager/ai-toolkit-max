@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "ai-toolkit-max",
-  "description": "Reusable engineering toolkit: rules (how to engineer) + skills across PROJECT (project, decide), ENTRY (classify), THINK (clarify, plan, estimate), EXECUTE (next, verify, status), and QUALITY (review, debug).",
+  "description": "Reusable engineering toolkit: rules (how to engineer) + skills across PROJECT (project, decide, decompose), ENTRY (classify), THINK (clarify, plan, estimate), EXECUTE (next, verify, status), and QUALITY (review, debug).",
   "owner": {
     "name": "easylager"
   },
