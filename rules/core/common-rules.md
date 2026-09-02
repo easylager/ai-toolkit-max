@@ -11,6 +11,12 @@ Shared constraints referenced by multiple skills. Cite this file instead of repe
 
 Before acting on a task file: re-read it fresh off disk. Never rely on conversation memory. Required at minimum before `/plan`, slice implementation, `/verify`, `/review`, session resume. See `rules/core/task-context.md` Reconciliation section for drift criteria.
 
+## Source of truth: docs/ vs .ai/
+
+Two different things, never conflated: `docs/` (when present) holds requirements, business rules, constraints, and external documentation — the source of truth for *what's true about the project*. `.ai/` holds state — stage, decisions, acceptance criteria, progress — the record of *where work currently stands*.
+
+`.ai/` is read fully as needed; it's small by contract. `docs/` is never read as a whole tree — read only the specific file(s) relevant to the current question, and only when the answer isn't already sitting compactly in `.ai/project.md`, a task's `Comprehension Tips`, or an already-answered `Open Question`. A skill that needs a requirement checks state first, `docs/` second, and never loads `docs/` speculatively "just in case."
+
 ## Chat context is not state
 
 The task file (`rules/core/task-context.md`) is the only source of truth. Applies to every skill that touches a task:

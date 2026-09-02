@@ -90,24 +90,42 @@ Project-level `VERIFY` aggregates the nodes' already-recorded acceptance results
 
 ## Decisions
 
+`/decide` is not an ADR generator and does not chase "the one correct answer." Its job: find the decision that actually needs making right now, look into it if that changes the answer, and propose the best call — one recommendation, not an absolute truth.
+
+A decision is worth a card only if at least one is true:
+
+- it changes architecture;
+- it affects behaviour that matters;
+- it's hard or expensive to reverse later;
+- there's a meaningful trade-off between real options.
+
+Otherwise it's an implementation detail — decide it inline while building, no card. "GET for listing tickets" is not a decision; "PostgreSQL vs SQLite vs in-memory for ticket storage" is. Don't manufacture a card to look thorough — a small project with one obvious choice at every step should produce zero cards, not fifteen.
+
 Project decisions are `PDEC-NNN` and live in `.ai/decisions.md`, one compact Decision Card each — distinct from a task's own `DEC-NNN` (`rules/core/task-context.md`), which stays inside that task file. `project.md` carries only the one-line index.
 
 ```
-## PDEC-NNN <question>
+## PDEC-NNN
+Question: <what's being decided>
 Recommendation: <option>
 Why:
 - <2-3 bullets>
-Trade-off: <one line>
+Alternatives: <omit if none material>
+- <option> — <one-line why not>
+Trade-off: <one line — the recommendation's own cost>
 Status: PROPOSED | ACCEPTED | SUPERSEDED by PDEC-NNN
 ```
 
-Cards are short by contract. No context section, no alternatives narrative, no reasoning transcript — the trade-off line is the whole cost side.
+Cards are short by contract. `Alternatives` lists only real, relevant options — 1-2 at most — never a padded list of things nobody would pick; omit it entirely when the recommendation is simply the obvious choice. No context section, no reasoning transcript.
 
 ## Human authority
 
 **Every technology and architecture decision belongs to the human, not the agent.** The agent analyses, recommends, and executes; it never writes `ACCEPTED` on its own. A card stays `PROPOSED` until the user picks. A user's choice against the recommendation is recorded as chosen, without re-arguing.
 
-A project-level Human Gate exists exactly where a decision is hard to reverse, carries real risk, changes architecture, or has a meaningful trade-off. Everything else the agent just does. On a gate, `stage` stays put, the reason goes in `Blockers`, and `Next` names what the user has to decide.
+A project-level Human Gate exists exactly where a decision is hard to reverse, carries real risk, changes architecture, or has a meaningful trade-off. Everything else the agent just does. On a gate, `stage` stays put, the reason goes in `Blockers`, and `Next` names what the user has to decide — the actual question ("how should tickets be stored?"), never a bare instruction to run a command.
+
+## Reading docs/
+
+`DISCOVER` and `/decide` are the stages most likely to need `docs/` (requirements, constraints, external specs) — see `rules/core/common-rules.md`'s Source of truth section for the boundary. Read only what the current question needs, never the whole tree, and never re-read what `project.md` or a task's `Comprehension Tips` already answers compactly.
 
 ## Reconciliation
 

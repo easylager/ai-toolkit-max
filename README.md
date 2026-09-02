@@ -77,7 +77,7 @@ Twenty-one skills, each a distinct mode of work rather than a fixed pipeline sta
 | Skill | Use it when |
 |---|---|
 | `/project` | Any time you want to know where the project is. Reports the current stage, the five questions, and the single next action — then takes that step: `DISCOVER` a goal, route a blocking choice to `/decide`, `DECOMPOSE` into a capability graph, hand a `READY` node to the task workflow, aggregate `VERIFY` results, or name what `HARDEN` still needs. Its only state is `.ai/project.md`, deliberately one screen long. |
-| `/decide` | A choice has a real trade-off, is hard to reverse, or changes architecture. Produces a Decision Card — question, recommendation, 2-3 reasons, one trade-off — with a comparison matrix only when the trade-off is genuine. Stays `PROPOSED` until you pick: the agent recommends, you decide. |
+| `/decide` | A choice has a real trade-off, is hard to reverse, or changes architecture — never for an implementation detail with one obvious answer. Produces a Decision Card — question, one recommendation, 2-3 reasons, 1-2 real alternatives when they exist, one trade-off — with a comparison matrix only when the trade-off is genuine. Stays `PROPOSED` until you pick: the agent proposes, you decide. |
 
 **ENTRY** — decide how much process the task deserves.
 
