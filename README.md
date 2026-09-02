@@ -5,20 +5,25 @@ A small, stateful toolkit for Claude Code. One persistent task file. Simple work
 **How it works:**
 
 ```
-.ai/tasks/TASK-NNN.md  (source of truth)
+.ai/project.md         (project dashboard — optional, for multi-task work)
+    ↓ one node = one task
+.ai/tasks/TASK-NNN.md  (source of truth for a task)
     ↑
     │ read/write
     │
-  skills (task · clarify · research · plan · estimate · execute · verify · review)
+  skills (project · decide | task · clarify · research · plan · estimate · execute · verify · review)
     ↑
     │ use to manage work
     │
   Claude Code (the execution engine)
 ```
 
+- **Project file** — one-screen dashboard: stage, goal, next, blockers, task graph. Only when a project spans several tasks.
 - **Task file** — persistent record of requirements, plan, progress, decisions.
-- **Skills** — `/research`, `/clarify`, `/plan`, `/estimate`, `/execute`, `/verify`, `/review` — read task, do work, update task, report result.
+- **Skills** — `/project`, `/decide`, `/research`, `/clarify`, `/plan`, `/estimate`, `/execute`, `/verify`, `/review` — read state, do work, update state, report result.
 - **Rules** — engineering principles pulled into your project's `CLAUDE.md`.
+
+Two levels, same idea. A single task: `/classify` → `/clarify` → `/plan` → `/estimate` → `/execute`. A whole project: `/project` walks five questions — *что строим → как должно работать → как построим → как убедимся, что работает → что дальше* — and hands each node of its task graph to that same task workflow.
 
 Typical workflow: `/research` (if needed) → `/clarify` → `/plan` → `/estimate` → `/execute` (which chains phases until done, or you invoke skills individually). `/research` can repeat later for one targeted follow-up question — see [Skills](#skills).
 Minimal, human-readable, easy to resume after an interruption.
@@ -66,6 +71,13 @@ Both are idempotent — safe to re-run any time. Two more modes, documented belo
 ## Skills
 
 Twenty-one skills, each a distinct mode of work rather than a fixed pipeline stage. None of them are mandatory gates — invoke only what the task warrants.
+
+**PROJECT** — navigate work that spans more than one task. Skip entirely for a single task.
+
+| Skill | Use it when |
+|---|---|
+| `/project` | Any time you want to know where the project is. Reports the current stage, the five questions, and the single next action — then takes that step: `DISCOVER` a goal, route a blocking choice to `/decide`, `DECOMPOSE` into a capability graph, hand a `READY` node to the task workflow, aggregate `VERIFY` results, or name what `HARDEN` still needs. Its only state is `.ai/project.md`, deliberately one screen long. |
+| `/decide` | A choice has a real trade-off, is hard to reverse, or changes architecture. Produces a Decision Card — question, recommendation, 2-3 reasons, one trade-off — with a comparison matrix only when the trade-off is genuine. Stays `PROPOSED` until you pick: the agent recommends, you decide. |
 
 **ENTRY** — decide how much process the task deserves.
 
@@ -134,6 +146,50 @@ That has Claude Code fetch and manage its own copy from GitHub, separate from an
 Claude Code caches an installed plugin's content under an internal, version-numbered path, and only refreshes that cache when the plugin's version changes — editing files in this repo without bumping `.claude-plugin/plugin.json`'s version otherwise wouldn't take effect. `install.sh` sidesteps that by reinstalling on every run, so what's active always matches what's on disk here, regardless of version. This is also why `--doctor` can report a "stale cache": it means something installed the plugin without going through `install.sh`.
 
 To remove it: `claude plugin uninstall ai-toolkit-max` and `claude plugin marketplace remove ai-toolkit-max`.
+
+## Project state
+
+When work spans more than one task, `/project` keeps a single dashboard at `.ai/project.md` — deliberately about one screen long, no history, no logs, no accumulated context. Full contract in `rules/core/project-state.md`.
+
+```
+.ai/
+├── project.md      # stage · goal · next · blockers · open questions · decisions index · task graph
+├── decisions.md    # PDEC-NNN Decision Cards
+└── tasks/
+    └── TASK-003.md # one node of the graph, once work on it starts
+```
+
+Six stages, five questions:
+
+```
+DISCOVER → DECIDE → DECOMPOSE → EXECUTE → VERIFY → HARDEN
+
+[ ] Что строим?                  [ ] Как убедимся, что работает?
+[ ] Как должно работать?         [ ] Что дальше?
+[ ] Как построим?
+```
+
+- **The graph is behaviour, not files.** Nodes read "Пользователь может войти", never "создать модель / сериализатор / эндпоинт". Statuses are `BLOCKED`/`READY`/`IN_PROGRESS`/`DONE`/`FAILED` — nothing more.
+- **A node becomes a task lazily.** Only when work starts does it get a `TASK-NNN.md`; from then on the task file is authoritative and the node's status is a derived mirror, never maintained twice.
+- **Nothing accumulates.** Stale entries are overwritten, not appended beside their replacement. Detail lives in the task file, decision rationale in `.ai/decisions.md`, nothing in between.
+- **Every technology and architecture decision is the human's.** `/decide` writes `PROPOSED`; only your choice makes it `ACCEPTED`. A project Human Gate exists exactly where a decision is hard to reverse, risky, architectural, or has a real trade-off — and nowhere else.
+- **Project `VERIFY` aggregates, never re-verifies.** It reads the acceptance results already recorded by `/verify` in the task files.
+- **Replanning changes the graph.** A node hitting `REPLAN_REQUIRED` means nodes get split, added, or dropped — not patched around.
+
+```
+/project
+  DECOMPOSE
+
+  - [x] Что строим?
+  - [x] Как должно работать?
+  - [ ] Как построим?   ←
+  - [ ] Как убедимся, что работает?
+  - [ ] Что дальше?
+
+  Граф готов: AUTH-01, API-01, UI-01 — READY.
+
+  Дальше: AUTH-01 → /classify
+```
 
 ## Execution state
 
@@ -215,6 +271,7 @@ Markdown principle sets, grouped so you only pull in what's relevant to the proj
 | `rules/core/quality.md` | Correctness, error handling, testing, observability. |
 | `rules/core/security.md` | Secrets, untrusted input, least privilege. |
 | `rules/core/execution-state.md` | The `.ai/` contract — the task file's location, the acceptance-criteria axes, the state machine, and that state is advisory. |
+| `rules/core/project-state.md` | The project-level contract — `.ai/project.md`'s one-screen schema, the six stages and five questions, the task graph, and the Decision Card format. |
 | `rules/core/task-context.md` | The Task Context document contract — schema, human/AI ownership, reconciliation, staleness, `TASK_CONTEXT_ROOT` resolution. |
 | `rules/core/capabilities.md` | How to treat MCPs: minimum-capability selection, the registry of which MCP serves which skill, and default permission levels. |
 | `rules/backend/python.md` | Python/FastAPI conventions — typing, async, thin routes, Pydantic. |
@@ -242,11 +299,12 @@ That creates (or, if one already exists, appends to) the project's `CLAUDE.md` w
 @/absolute/path/to/ai-toolkit-max/rules/core/security.md
 @/absolute/path/to/ai-toolkit-max/rules/core/execution-state.md
 @/absolute/path/to/ai-toolkit-max/rules/core/task-context.md
+@/absolute/path/to/ai-toolkit-max/rules/core/project-state.md
 @/absolute/path/to/ai-toolkit-max/rules/core/capabilities.md
 <!-- ai-toolkit-max:rules:end -->
 ```
 
-The seven `core/` rules are always included. `backend/python.md` is added automatically when the project looks like it needs it (a `requirements.txt`/`pyproject.toml`/`*.py`); `frontend/design.md` is added whenever a `package.json` exists at all, and `frontend/react.md` on top of it specifically when that `package.json` depends on `react` — nothing is forced. Content outside the markers is never touched, and re-running is idempotent: it regenerates the block in place rather than duplicating it.
+The eight `core/` rules are always included. `backend/python.md` is added automatically when the project looks like it needs it (a `requirements.txt`/`pyproject.toml`/`*.py`); `frontend/design.md` is added whenever a `package.json` exists at all, and `frontend/react.md` on top of it specifically when that `package.json` depends on `react` — nothing is forced. Content outside the markers is never touched, and re-running is idempotent: it regenerates the block in place rather than duplicating it.
 
 Claude Code may show a one-time prompt the first time a session loads a project with these imports, since the paths point outside the project — that's expected, approve it once.
 
@@ -296,6 +354,8 @@ scripts/
 tests/
   test_install.sh          # black-box tests, isolated from your real environment
 skills/
+  project/SKILL.md
+  decide/SKILL.md
   classify/SKILL.md
   execute/SKILL.md
   task/SKILL.md
@@ -325,6 +385,7 @@ rules/
     security.md
     execution-state.md
     task-context.md
+    project-state.md
     capabilities.md
   backend/
     python.md

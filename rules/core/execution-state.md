@@ -2,6 +2,8 @@
 
 Persisted execution state for multi-slice, resumable tasks. One file per task — see `rules/core/task-context.md` for schema.
 
+When a project spans several tasks, `rules/core/project-state.md` sits above this file: it holds the task graph and project stage, and each of its nodes becomes one task governed here. A task never reads project state to decide its own next action.
+
 For shared skill constraints, see `rules/core/common-rules.md`.
 
 ## Tasks

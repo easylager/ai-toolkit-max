@@ -96,7 +96,7 @@ Status: READY | EXECUTING | VERIFYING | DONE
 ## Execution History
 ```
 
-Per-criterion `Evidence`/`Verified at` is the only evidence store — there is deliberately no separate top-level "Evidence" section duplicating it. `Decisions` inside the task file replaces the old `.ai/decisions.md` "tag each entry with its task id" convention: the file itself is already scoped to one task.
+Per-criterion `Evidence`/`Verified at` is the only evidence store — there is deliberately no separate top-level "Evidence" section duplicating it. `Decisions` (`DEC-NNN`) inside the task file is scoped to that one task — the file itself already carries the task id. Decisions spanning the whole project are `PDEC-NNN` Decision Cards in `.ai/decisions.md` instead (`rules/core/project-state.md`); never duplicate one into the other.
 
 `Strategy` is `/classify`'s output — the recommended workflow (state/research/clarification/planning needs, verification level, `research_areas`) persisted as the YAML block `skills/classify/SKILL.md` defines, plus the resulting skill chain. `/execute` and other skills read it as a hint, never a hard gate — a later phase can still turn out to need more (or less) than classify predicted. Classify doesn't own a workflow `phase` (see `rules/core/execution-state.md`); writing `Strategy` never advances `phase` past `new`.
 
