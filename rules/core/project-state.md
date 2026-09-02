@@ -40,6 +40,9 @@ updated_at: <YYYY-MM-DD>
 ## Goal
 <1-3 lines — what we are building and for whom>
 
+## Flow
+<2-5 lines — how it works end-to-end; omit the section while unknown>
+
 ## Progress
 - [x] Что строим?
 - [ ] Как должно работать?   ←
@@ -66,6 +69,8 @@ updated_at: <YYYY-MM-DD>
 ```
 
 Node statuses: `BLOCKED` / `READY` / `IN_PROGRESS` / `DONE` / `FAILED`. Nothing else — this is not a workflow engine.
+
+`Goal` answers *Что строим?*, `Flow` answers *Как должно работать?*. Both stay absent until confidently known from a source of truth (user statement, `docs/`) — never filled with invented detail to make the dashboard look complete.
 
 ## No accumulation
 
@@ -126,6 +131,8 @@ A project-level Human Gate exists exactly where a decision is hard to reverse, c
 ## Reading docs/
 
 `DISCOVER` and `/decide` are the stages most likely to need `docs/` (requirements, constraints, external specs) — see `rules/core/common-rules.md`'s Source of truth section for the boundary. Read only what the current question needs, never the whole tree, and never re-read what `project.md` or a task's `Comprehension Tips` already answers compactly.
+
+A `/project @path` call names the docs to read directly — read exactly that path (file or directory) and extract only what's confidently there for `Goal`/`Flow`, nothing invented. If that's enough to answer both, `DISCOVER` completes and advances to `DECIDE` in the same pass — don't hold at `DISCOVER` or manufacture open questions just to keep the dashboard busy. If it isn't enough, the gap becomes a specific `Open Question`, not a generic "requirements unclear."
 
 ## Reconciliation
 
